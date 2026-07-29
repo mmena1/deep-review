@@ -16,7 +16,7 @@ Review one explicit target predictably: **resolve**, **analyze**, **settle**, **
 3. For file paths, resolve exactly those paths and their applicable diff. If no target argument exists, auto-detect uncommitted changes, then an open PR for the current branch.
 4. Echo the resolved target, base, head, associated PR (or lack of one), and review mode. Ask the user to confirm before analyzing.
 5. A branch with no unique open PR is a local, non-posting review. Require an explicit PR number/URL before publishing comments.
-6. After the user confirms the target, create a single isolated git worktree for the review. For PRs, use the head SHA for analysis; for validation, use the GitHub merge ref when available and fall back to the head SHA. For branches or commit ranges, check out the resolved head. For uncommitted changes or explicit file paths, skip the worktree and use the current workspace directly. Never change the user's current checkout.
+6. After the user confirms the target, create a single isolated git worktree under `/tmp` with a unique name for the review. For PRs, use the head SHA for analysis; for validation, use the GitHub merge ref when available and fall back to the head SHA. For branches or commit ranges, check out the resolved head. For uncommitted changes or explicit file paths, skip the worktree and use the current workspace directly. Never change the user's current checkout.
 
 Complete when the confirmed target, diff, base/head, publication eligibility, and review worktree path (if any) are recorded.
 

@@ -11,6 +11,7 @@ allowed-tools:
   - edit
 permissions:
   allow:
+    - Read(/tmp/**)
     - Write(**)
     - Write(/tmp/**)
   deny:
