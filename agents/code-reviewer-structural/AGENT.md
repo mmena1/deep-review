@@ -12,6 +12,10 @@ allowed-tools:
 permissions:
   allow:
     - Read(/tmp/**)
+    - Exec(git diff)
+    - Exec(git log)
+    - Exec(git show)
+    - Exec(git status)
     - Write(**)
     - Write(/tmp/**)
   deny:

@@ -16,13 +16,13 @@ Review one explicit target predictably: **resolve**, **analyze**, **settle**, **
 3. For file paths, resolve exactly those paths and their applicable diff. If no target argument exists, auto-detect uncommitted changes, then an open PR for the current branch.
 4. Echo the resolved target, base, head, associated PR (or lack of one), and review mode. Ask the user to confirm before analyzing.
 5. A branch with no unique open PR is a local, non-posting review. Require an explicit PR number/URL before publishing comments.
-6. After the user confirms the target, create a single isolated git worktree under `/tmp` with a unique name for the review. For PRs, use the head SHA for analysis; for validation, use the GitHub merge ref when available and fall back to the head SHA. For branches or commit ranges, check out the resolved head. For uncommitted changes or explicit file paths, skip the worktree and use the current workspace directly. Never change the user's current checkout.
+6. After the user confirms the target, fetch the base and head refs into the shared `.git` directory, then create a single isolated git worktree under `/tmp` with a unique name for the review. For PRs, use the head SHA for analysis; for validation, use the GitHub merge ref when available and fall back to the head SHA. For branches or commit ranges, check out the resolved head. For uncommitted changes or explicit file paths, skip the worktree and use the current workspace directly. Never change the user's current checkout.
 
 Complete when the confirmed target, diff, base/head, publication eligibility, and review worktree path (if any) are recorded.
 
 ## 2. Gather review context
 
-Collect the changed files from the review worktree (or current workspace for uncommitted/file-path targets); relevant project instructions and their contents; recent commits for the resolved target; stated intent from the target PR or commits; PR freshness metadata when applicable; and source files without corresponding tests. Pass this context and the worktree path to every reviewer.
+Collect the changed files from the review worktree (or current workspace for uncommitted/file-path targets); the resolved diff if it is small enough to include; the base and head SHAs; relevant project instructions and their contents; recent commits for the resolved target; stated intent from the target PR or commits; PR freshness metadata when applicable; and source files without corresponding tests. Pass this context and the worktree path to every reviewer. Reviewers may run read-only `git` commands in the worktree to fetch the diff, history, or file contents as needed.
 
 Complete when each reviewer can inspect the same target without relying on the root checkout.
 
@@ -42,7 +42,7 @@ Complete when the user confirms a non-empty reviewer set, or explicitly ends the
 
 ## 4. Analyze in parallel
 
-Launch the selected analysis reviewers in parallel with the read-only `code-reviewer` profile (or `code-reviewer-structural` for structural maintainability). They use repository read/search tools only against the review worktree path (or current workspace when no worktree is used); they do not execute shell commands or create files.
+Launch the selected analysis reviewers in parallel with the `code-reviewer` profile (or `code-reviewer-structural` for structural maintainability). They use repository read/search tools and read-only `git` commands (`git diff`, `git log`, `git show`, `git status`) against the review worktree path (or current workspace when no worktree is used) to inspect the diff and history. They do not write files or run non-git shell commands.
 
 See `GLOSSARY.md` for finding types. Each reviewer reports only:
 
