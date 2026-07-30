@@ -1,6 +1,7 @@
 ---
 name: deep-review
-disable-model-invocation: true
+triggers:
+  - user
 description: Review a change with parallel analysis and targeted validation.
 argument-hint: "[PR number | PR URL | branch | commit range | file paths]"
 ---
