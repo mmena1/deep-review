@@ -71,6 +71,14 @@ When the user explicitly requests a top-level approval summary:
 
 > Nice fixes! Looks good now
 
+## Mapping Action to comment style
+
+Each finding's `Action` determines the comment voice:
+
+- **Action: fix-now** → Use the **clear-cut** voice. State the fix directly as an instruction. Include a ` ```suggestion ` block when the change is a few lines or fewer. Do not hedge or ask permission.
+- **Action: discuss** → Use the **judgment-call** voice. Frame the finding as a genuine question, hedge with "I think" / "I don't think" / "Do we care about...?" / "Should we...?" / "WDYT?". Preserve uncertainty for unresolved questions; do not present them as settled fact.
+- **Action: follow-up** → Explain why the issue is out of scope for this PR, describe the follow-up scope in one sentence, and suggest creating a ticket or follow-up PR. The tone is informative, not blocking.
+
 ## Applying this to generated review comments
 
 When drafting inline comments from consolidated findings:

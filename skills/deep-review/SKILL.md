@@ -66,9 +66,33 @@ Complete when every candidate is validated, unresolved with an attempted check, 
 
 Use `references/output-template.md`.
 
-Present direct and validated findings as **Findings**. Present unresolved questions separately with evidence, attempted validation, and a per-question choice: **post to PR**, **keep private / investigate**, or **discard**. Do not draft unresolved questions for publication until the user chooses to post them.
+### Assign an action to each finding
 
-Then offer: fix all findings, fix selected findings, add PR review, keep reviewing, or dismiss.
+For every direct and validated finding, compute an **Action** using the severity, evidence, and the size of the suggested fix:
+
+| Evidence | Severity | Fix size | Action |
+|---|---|---|---|
+| confirmed / likely | blocker / high | ≤ ~20 lines | **fix-now** |
+| confirmed / likely | blocker / high | > ~20 lines or cross-module | **follow-up** |
+| confirmed / likely | medium | ≤ ~20 lines | **fix-now** |
+| confirmed / likely | medium | > ~20 lines or cross-module | **follow-up** |
+| confirmed / likely | low | ≤ ~20 lines | **fix-now** |
+| plausible | any | any | **discuss** |
+| speculative | any | any | omit (do not report) |
+
+Use judgment when the fix is not a code snippet (e.g., a missing test or a doc update): if it is unambiguous and small, treat it as **fix-now**; if it requires design decisions, treat it as **discuss** or **follow-up** based on scope.
+
+### Present findings grouped by action
+
+Present direct and validated findings as **Findings**, grouped into three subsections:
+
+- **Fix now** — small, unambiguous fixes. Include a concrete suggested code snippet when possible.
+- **Discuss** — findings needing author context or a tradeoff decision. Include the discussion prompt, not a code snippet.
+- **Follow-up** — real issues too large or out-of-scope for this PR. Describe the follow-up scope instead of a code snippet.
+
+Present unresolved questions separately with evidence, attempted validation, and a per-question choice: **post to PR**, **keep private / investigate**, or **discard**. Treat unresolved questions as **Action: discuss**. Do not draft unresolved questions for publication until the user chooses to post them.
+
+Then offer: fix all `fix-now` findings, discuss selected findings, create follow-up tickets, add PR review, keep reviewing, or dismiss.
 
 Complete when the user selects an action. Before a delayed action, re-check the target: PR state/head SHA for PRs, or the diff summary for local reviews.
 
