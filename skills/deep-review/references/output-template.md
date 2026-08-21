@@ -53,6 +53,5 @@ Unresolved questions are treated as **Action: discuss**.
 
 - [ ] Fix fix-now finding #1
 - [ ] Discuss discuss finding #1
-- [ ] Create follow-up ticket for follow-up finding #1
 - [ ] Decide unresolved question #1
 ```

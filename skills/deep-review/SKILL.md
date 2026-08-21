@@ -92,7 +92,7 @@ Present direct and validated findings as **Findings**, grouped into three subsec
 
 Present unresolved questions separately with evidence, attempted validation, and a per-question choice: **post to PR**, **keep private / investigate**, or **discard**. Treat unresolved questions as **Action: discuss**. Do not draft unresolved questions for publication until the user chooses to post them.
 
-Then offer: fix all `fix-now` findings, discuss selected findings, create follow-up tickets, add PR review, keep reviewing, or dismiss.
+Then offer: fix all `fix-now` findings, discuss selected findings, add PR review, keep reviewing, or dismiss.
 
 Complete when the user selects an action. Before a delayed action, re-check the target: PR state/head SHA for PRs, or the diff summary for local reviews.
 
