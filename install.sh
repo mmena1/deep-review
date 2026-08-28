@@ -25,7 +25,7 @@ install_dir() {
 
 install_dir "$REPO_ROOT/skills/deep-review" "$CONFIG_DIR/skills/deep-review"
 
-for agent in code-reviewer code-reviewer-structural; do
+for agent in code-reviewer code-reviewer-structural code-reviewer-validator; do
   install_dir "$REPO_ROOT/agents/$agent" "$CONFIG_DIR/agents/$agent"
 done
 

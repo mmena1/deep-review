@@ -1,7 +1,7 @@
 ---
 name: code-reviewer-structural
-description: Reviews structural maintainability, abstraction quality, and code simplification opportunities using Adaptive routing and evidence-severity classification
-model: adaptive
+description: Reviews structural maintainability, abstraction quality, and code simplification opportunities using evidence-severity classification
+model: gpt-5-6-sol-medium
 allowed-tools:
   - read
   - grep

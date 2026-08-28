@@ -1,7 +1,7 @@
 ---
 name: code-reviewer
 description: Reviews code changes for bugs, logic errors, security vulnerabilities, code quality issues, and adherence to project conventions using evidence and severity classification
-model: adaptive
+model: gpt-5-6-luna-medium
 allowed-tools:
   - read
   - grep

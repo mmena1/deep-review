@@ -42,7 +42,7 @@ Every surviving finding is assigned an action based on its severity, evidence st
 ## Contents
 
 - `skills/deep-review/` — the `/deep-review` skill
-- `agents/` — `code-reviewer` and `code-reviewer-structural` subagent profiles
+- `agents/` — `code-reviewer`, `code-reviewer-structural`, and `code-reviewer-validator` subagent profiles
 
 ## Install
 

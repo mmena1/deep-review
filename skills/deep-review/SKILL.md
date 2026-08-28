@@ -56,7 +56,7 @@ Complete when every selected reviewer returns direct findings and candidate find
 
 ## 5. Settle candidates
 
-Deduplicate candidates, then pass every remaining candidate to one validation reviewer. Launch that reviewer as foreground `subagent_general` against the existing review worktree so required write/command permissions can be approved. The reviewer prioritizes uncertain high-impact candidates, then cheap and decision-relevant checks.
+Deduplicate candidates, then pass every remaining candidate to one `code-reviewer-validator`. Launch that reviewer as a foreground custom subagent against the existing review worktree so required write/command permissions can be approved. The reviewer prioritizes uncertain high-impact candidates, then cheap and decision-relevant checks.
 
 The validation reviewer may create disposable probes or focused tests, run the smallest relevant local command, and remove every artifact before reporting. It never commits, pushes, changes shared configuration, runs deployments, or calls external systems. See `GLOSSARY.md` for outcomes. It returns one outcome per candidate: **Validated finding**, **Unresolved question**, or **Disproved**.
 
