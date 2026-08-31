@@ -39,19 +39,20 @@ Reviewers: [selected analysis reviewers] + validation reviewer [run / not needed
    Why it matters: [impact]
    Follow-up scope: [what the follow-up PR/ticket should cover]
 
-### Unresolved Questions
+### Unresolved
 
-Unresolved questions are treated as **Action: discuss**.
+Unresolved Candidates are treated as **Action: discuss**.
 
-1. **Question**
+1. **Candidate title**
    File: path/to/file:line
    Evidence: [source evidence]
    Validation attempted: [probe/check and result]
+   Remaining question: [what the validator could not establish]
    Decision: post to PR | keep private / investigate | discard
 
 ### Recommended Actions
 
 - [ ] Fix fix-now finding #1
 - [ ] Discuss discuss finding #1
-- [ ] Decide unresolved question #1
+- [ ] Decide unresolved Candidate #1
 ```

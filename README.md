@@ -9,8 +9,8 @@ The skill runs as a six-step pipeline:
 1. **Gate & resolve** — Require a clean caller repository, then lock the committed review target (PR, branch, commit, or range). Create isolated reviewer worktrees so the user's checkout is never touched.
 2. **Context** — Collect changed files, diff, commit history, project conventions, and stated intent from the target.
 3. **Choose reviewers** — Classify the diff and recommend a subset of analysis reviewers. The user confirms or adjusts.
-4. **Analyze** — Launch selected reviewers in parallel. Each reports **direct findings** (mechanically established) and **candidate findings** (need validation).
-5. **Settle** — A validation reviewer probes every candidate with targeted checks, producing **validated findings**, **unresolved questions**, or **disproved** (dropped).
+4. **Analyze** — Launch selected reviewers in parallel in independent disposable worktrees. Each reports **Direct findings** (settled with sufficient evidence) or **Candidate findings** (credible but unsettled within its permissions, environment, or reasonable verification budget). Specialists may use bounded disposable probes without requiring execution when static evidence is decisive.
+5. **Settle** — A validation reviewer probes every Candidate with targeted checks, producing **Validated findings**, **Unresolved** Candidates, or **Disproved** hypotheses (dropped). Only Candidates reach validation.
 6. **Present & decide** — Group all surviving findings by action (**fix now**, **discuss**, **follow-up**) and offer next steps: apply fixes, post a PR review, or dismiss.
 
 ### Reviewers
@@ -27,7 +27,7 @@ You pick from five analysis reviewers depending on what changed:
 
 ### Validation
 
-Analysis reviewers produce two kinds of output: **direct findings** (established from source evidence alone) and **candidate findings** (plausible but uncertain). Candidates go through a validation step where a separate reviewer runs targeted probes — disposable tests, small commands, or code inspection — to settle each one as **validated**, **unresolved**, or **disproved** (dropped from the report).
+A **Direct finding** is settled by the analysis reviewer with sufficient evidence from deterministic source/control-flow analysis, existing tests, focused commands, or a disposable reproduction/probe; no validator investigation is required. A **Candidate finding** is credible but could not be settled within the reviewer's permissions, environment, or reasonable verification budget and must include a falsifiable validation hypothesis. Candidates go through validation, which returns **Validated**, **Disproved**, or **Unresolved**.
 
 ### Actions
 
@@ -58,4 +58,4 @@ This symlinks the skill and agents into `~/.config/devin/skills/` and `~/.config
 
 ## Update
 
-Edit files in this repo (or through the symlinks in `~/.config/devin/`), then commit and push.
+Edit files in this repo (or through the symlinks in `~/.config/devin/`), then commit the changes. Run `./install.sh` when you need to refresh the installed symlinks.

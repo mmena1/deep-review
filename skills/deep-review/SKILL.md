@@ -1,13 +1,18 @@
 ---
 name: deep-review
+model: gpt-5-6-sol-medium
 triggers:
   - user
 description: Run a strict PR-gate review with isolated parallel reviewers and targeted validation.
-argument-hint: "[PR number | PR URL | branch | commit range]"
+argument-hint: "[PR number | PR URL | branch | commit | commit range]"
 permissions:
   allow:
     - Read(/tmp/deep-review-runs/**)
     - Write(/tmp/deep-review-runs/**)
+    - Exec(git diff)
+    - Exec(git log)
+    - Exec(git show)
+    - Exec(git status)
 ---
 
 # Deep Review
@@ -20,15 +25,15 @@ Before resolving a target, asking for confirmation, creating a worktree, or laun
 
 1. Resolve the caller repository root with `git rev-parse --show-toplevel`. Stop if the caller is not inside a Git repository.
 2. Run `git -C <caller-root> status --porcelain`. Require no output. This rejects staged, unstaged, deleted, renamed, and untracked non-ignored files; ignored files remain exempt.
-3. Explain that this is a PR-gate review and stop with a clear message if the tree is not clean. Do not inspect or review uncommitted changes as a fallback.
+3. Explain that this is a PR-gate review and stop with a clear message if the tree is not clean. Do not fall back to reviewing working-tree changes.
 
-The gate applies to every invocation, including explicit PR identifiers, branches, commits, ranges, and paths. This initial result remains valid if the caller checkout changes later, because all reviewers use isolated worktrees.
+The gate applies to every invocation, including explicit PR identifiers, branches, commits, and ranges. This initial result remains valid if the caller checkout changes later, because all reviewers use isolated worktrees.
 
 Complete when the caller root is recorded and a clean `git status --porcelain` result has been recorded for this invocation, or the invocation has been rejected.
 
 ## 2. Resolve the committed target
 
-1. Require an argument containing a PR number/URL, branch, commit, or commit range. Do not auto-detect uncommitted changes. Do not accept ad-hoc file paths as review targets; ask for the containing branch, commit, range, or PR instead.
+1. Require an argument containing a PR number/URL, branch, commit, or commit range. Do not auto-detect working-tree changes. Do not accept ad-hoc file paths as review targets; ask for the containing branch, commit, range, or PR instead.
 2. For a PR, collect its number, repository, base ref, head ref, head SHA, state, and diff. For a branch or commit range, resolve its base, head SHA, and diff; look up an associated open PR without substituting it for the supplied target.
 3. Echo the resolved target, base, head, associated PR (or lack of one), and review mode. Ask the user to confirm before fetching refs or creating review workspaces.
 4. A branch or commit range with no unique open PR is a local, non-posting review. Require an explicit PR number/URL before publishing comments.
@@ -59,12 +64,12 @@ Complete when the context package is complete and identical target context is av
 
 ## 5. Analyze in parallel
 
-Launch the selected analysis reviewers in parallel with the `code-reviewer` profile (or `code-reviewer-structural` for structural maintainability). Each reviewer investigates potential issues far enough to prove or disprove them when practical. Reviewers may run focused commands and tests, create disposable probes, and modify throwaway review files only inside their assigned workspace.
+Launch the selected analysis reviewers in parallel with the `code-reviewer` profile (or `code-reviewer-structural` for structural maintainability). Each reviewer investigates hypotheses far enough to settle or disprove them when practical. Specialists SHOULD attempt cheap, local verification when practical. They MAY create temporary tests, fixtures, scripts, or other disposable scenarios within their isolated review worktree. They MUST NOT fix or refactor the production implementation as remediation or substantially expand the review into an open-ended debugging session. If verification requires permissions, environment setup, broad changes, long investigation, or commands unavailable to a background subagent, return a Candidate instead. If the hypothesis is disproved, discard it. Specialists do not need to clean up disposable verification artifacts; the coordinator owns worktree lifecycle. Focused runtime verification is opportunistic: use it when the required command is already permitted; otherwise escalate as a Candidate.
 
 See `GLOSSARY.md` for finding types. Each reviewer reports only:
 
-- **Direct finding** with file/line and source evidence when the reviewer has sufficient evidence to stand behind the claim without further investigation.
-- **Candidate finding** with file/line, impact, confidence, source evidence, and one falsifiable validation hypothesis when the issue remains credible but cannot be settled within the reviewer's permissions, environment, time/effort budget, or reasonable scope.
+- **Direct finding** when the concern is settled with sufficient evidence. Include title, file/line, severity, evidence classification/how it was settled, source or runtime evidence, impact, and suggested remediation. Static evidence is sufficient when decisive; execution is not required.
+- **Candidate finding** when the concern remains credible but cannot be settled within the reviewer's permissions, environment, or reasonable verification budget. Include title, file/line, severity, confidence, source evidence, impact, attempted verification if any, why verification remained blocked or inconclusive, one falsifiable validation hypothesis, and suggested remediation.
 - Discard hypotheses that the reviewer disproves.
 
 The validator is an escalation path for candidates analysis reviewers could not settle. Use `references/structural-maintainability-review.md` for structural review. The history reviewer identifies historical evidence from the supplied context; it does not run Git commands itself.
@@ -75,7 +80,7 @@ Complete when every selected reviewer has investigated its focus, returned only 
 
 Deduplicate candidates, then pass every remaining candidate to one `code-reviewer-validator` in its own coordinator-created workspace. Launch the validator as a foreground custom subagent so required command and write permissions can be approved. It prioritizes uncertain high-impact candidates, then cheap and decision-relevant checks.
 
-The validator may create disposable probes or focused tests and run the smallest relevant local command, but only inside its assigned workspace. It never commits, pushes, deploys, changes shared configuration, or calls external systems. See `GLOSSARY.md` for outcomes. It returns one outcome per candidate: **Validated finding**, **Unresolved question**, or **Disproved**.
+The validator may create disposable probes or focused tests and run the smallest relevant local command, but only inside its assigned workspace. It never remediates production code, commits, pushes, deploys, changes shared configuration, or calls external systems. It may leave disposable probes and a dirty worktree; the coordinator owns cleanup. See `GLOSSARY.md` for outcomes. It returns one outcome per candidate: **Validated finding**, **Unresolved**, or **Disproved**.
 
 Complete when every candidate has exactly one outcome with an attempted check where applicable, the validator workspace state is recorded, and all required findings/evidence are copied to a coordinator-owned location outside disposable workspaces.
 
@@ -95,7 +100,7 @@ For every direct and validated finding, compute an **Action** using severity, ev
 | plausible | any | any | **discuss** |
 | speculative | any | any | omit |
 
-Present findings grouped as **Fix now**, **Discuss**, and **Follow-up**. Present unresolved questions separately with evidence, attempted validation, and a per-question choice: **post to PR**, **keep private / investigate**, or **discard**. Do not draft unresolved questions for publication until the user chooses to post them.
+Present findings grouped as **Fix now**, **Discuss**, and **Follow-up**. Present unresolved candidates separately with evidence, attempted validation, and a per-candidate choice: **post to PR**, **keep private / investigate**, or **discard**. Do not draft unresolved candidates for publication until the user chooses to post them.
 
 Then offer: fix all `fix-now` findings, discuss selected findings, add PR review, keep reviewing, or dismiss. Before any delayed action, re-check the target: PR state/head SHA for PRs, or the committed diff summary for local reviews.
 
@@ -103,17 +108,16 @@ Complete when the user selects an action or ends the review, and the final repor
 
 ## Publication
 
-When the user chooses **add PR review**, follow `references/pr-review-comments.md`. Draft only direct, validated, and user-selected unresolved questions. Get per-comment approval. Submit one inline GitHub review with an empty top-level body unless the user explicitly requests a summary. Verify the expected comment count.
+When the user chooses **add PR review**, follow `references/pr-review-comments.md`. Draft only direct, validated, and user-selected unresolved candidates. Get per-comment approval. Submit one inline GitHub review with an empty top-level body unless the user explicitly requests a summary. Verify the expected comment count.
 
 ## Coordinator-owned cleanup
 
 Cleanup is a separate coordinator phase after all reviewers finish, including reviewer failure, timeout, cancellation, user dismissal, or publication failure. Run it before the review session ends:
 
 1. Collect and preserve the final report and selected evidence outside disposable reviewer workspaces.
-2. Remove probes and generated artifacts only from the coordinator-generated run path. Do not follow symlinks outside that path, and do not touch unrelated worktrees or concurrent review runs.
-3. Remove every reviewer workspace through `git worktree remove` (or the equivalent Git worktree mechanism). Do not ask background reviewers to clean up.
-4. Verify each workspace is absent and no corresponding Git worktree registration remains.
-5. Remove the run directory only after those checks pass, using a narrowly scoped, one-time coordinator authorization for this exact run path if deletion approval is required. Never add `Exec(rm)` or `Exec(rmdir)` to global or reviewer permissions.
-6. If cleanup is interrupted or any state remains, report the exact leftover path and Git registration state. Do not broaden the deletion scope or claim cleanup succeeded.
+2. Remove each exact coordinator-created worktree under `/tmp/deep-review-runs/**` through `git worktree remove --force` (or the narrowest equivalent Git worktree mechanism), because disposable probes may leave worktrees dirty. Do not follow symlinks outside the run path, and do not touch unrelated worktrees or concurrent review runs.
+3. Verify each workspace is absent and no corresponding Git worktree registration remains.
+4. Remove the run directory only after those checks pass, using a narrowly scoped, one-time coordinator authorization for this exact run path if deletion approval is required. Never add global or reviewer permissions for broad deletion commands.
+5. If cleanup is interrupted or any state remains, report the exact leftover path and Git registration state. Do not broaden the deletion scope or claim cleanup succeeded.
 
 Complete when all coordinator-created worktrees and the run directory are verified absent, or exact leftovers have been reported.
