@@ -1,12 +1,12 @@
 # deep-review
 
-A Devin skill for deep code review. It takes a PR, branch, commit range, or set of file paths and runs multiple specialized reviewers in parallel, validates uncertain findings, and presents an actionable report — optionally posting inline comments to the PR.
+A Devin skill for strict PR-gate code review. It takes a PR, branch, commit, or commit range and runs multiple specialized reviewers in isolated worktrees, validates uncertain findings, and presents an actionable report — optionally posting inline comments to the PR. Every run requires a clean caller repository and reviews committed targets only.
 
 ## How it works
 
 The skill runs as a six-step pipeline:
 
-1. **Resolve** — Lock the review target (PR, branch, commits, or files). Create an isolated worktree so the user's checkout is never touched.
+1. **Gate & resolve** — Require a clean caller repository, then lock the committed review target (PR, branch, commit, or range). Create isolated reviewer worktrees so the user's checkout is never touched.
 2. **Context** — Collect changed files, diff, commit history, project conventions, and stated intent from the target.
 3. **Choose reviewers** — Classify the diff and recommend a subset of analysis reviewers. The user confirms or adjusts.
 4. **Analyze** — Launch selected reviewers in parallel. Each reports **direct findings** (mechanically established) and **candidate findings** (need validation).
@@ -43,6 +43,8 @@ Every surviving finding is assigned an action based on its severity, evidence st
 
 - `skills/deep-review/` — the `/deep-review` skill
 - `agents/` — `code-reviewer`, `code-reviewer-structural`, and `code-reviewer-validator` subagent profiles
+
+The coordinator creates a unique run directory under `/tmp/deep-review-runs/` and one Git worktree per reviewer. Reviewers may write probes only in their assigned workspace; the coordinator owns cleanup after every exit path.
 
 ## Install
 
