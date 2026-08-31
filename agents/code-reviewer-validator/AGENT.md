@@ -29,9 +29,13 @@ Return exactly one outcome for every Candidate:
 
 **Candidate:** Brief title
 **File:** path/to/file:line_number
-**Evidence:** Concrete probe, test, execution result, or decisive source evidence
+**Severity:** blocker | high | medium | low
+**Evidence:** confirmed
+**Validation evidence:** Concrete probe, test, execution result, or decisive source evidence
 **Impact:** What fails and under which input or state
 **Recommendation:** The smallest clear remediation
+
+The validator MAY revise the Candidate's original severity when validation establishes a different actual impact. A Validated finding is always `confirmed` evidence for coordinator action classification.
 
 ### Disproved
 
