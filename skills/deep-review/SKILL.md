@@ -4,7 +4,7 @@ model: gpt-5-6-sol-medium
 triggers:
   - user
 description: Run a strict PR-gate review with isolated parallel reviewers and targeted validation.
-argument-hint: "[PR number | PR URL | branch | commit | commit range]"
+argument-hint: "[PR number | PR URL | branch | commit range]"
 permissions:
   allow:
     - Read(/tmp/deep-review-runs/**)
@@ -27,13 +27,13 @@ Before resolving a target, asking for confirmation, creating a worktree, or laun
 2. Run `git -C <caller-root> status --porcelain`. Require no output. This rejects staged, unstaged, deleted, renamed, and untracked non-ignored files; ignored files remain exempt.
 3. Explain that this is a PR-gate review and stop with a clear message if the tree is not clean. Do not fall back to reviewing working-tree changes.
 
-The gate applies to every invocation, including explicit PR identifiers, branches, commits, and ranges. This initial result remains valid if the caller checkout changes later, because all reviewers use isolated worktrees.
+The gate applies to every invocation, including explicit PR identifiers, branches, and commit ranges. This initial result remains valid if the caller checkout changes later, because all reviewers use isolated worktrees.
 
 Complete when the caller root is recorded and a clean `git status --porcelain` result has been recorded for this invocation, or the invocation has been rejected.
 
 ## 2. Resolve the committed target
 
-1. Require an argument containing a PR number/URL, branch, commit, or commit range. Do not auto-detect working-tree changes. Do not accept ad-hoc file paths as review targets; ask for the containing branch, commit, range, or PR instead.
+1. Require an argument containing a PR number/URL, branch, or commit range. Do not auto-detect working-tree changes. Do not accept a standalone commit or ad-hoc file paths as review targets; ask for the containing branch, range, or PR instead.
 2. For a PR, collect its number, repository, base ref, head ref, head SHA, state, and diff. For a branch or commit range, resolve its base, head SHA, and diff; look up an associated open PR without substituting it for the supplied target.
 3. Echo the resolved target, base, head, associated PR (or lack of one), and review mode. Ask the user to confirm before fetching refs or creating review workspaces.
 4. A branch or commit range with no unique open PR is a local, non-posting review. Require an explicit PR number/URL before publishing comments.
