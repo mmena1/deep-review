@@ -14,6 +14,6 @@ The **coordinator** owns the lifecycle of the review workspace and reviewer work
 
 **Cleanup** is a separate coordinator-owned phase that runs after all reviewers finish, including when a reviewer fails, times out, or is cancelled. Cleanup removes only artifacts inside the review workspace.
 
-A **PR gate review** is a review run that may start only from a clean caller repository state. It evaluates committed review targets and does not treat uncommitted changes or ad-hoc file paths as review targets.
+A **PR gate review** is a review run that may start only from a clean caller repository state. It evaluates committed review targets and does not treat working-tree changes or ad-hoc file paths as review targets.
 
 A **clean caller repository state** has no staged, unstaged, deleted, renamed, or untracked non-ignored files. Ignored files do not affect this state.
