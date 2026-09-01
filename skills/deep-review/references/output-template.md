@@ -7,6 +7,7 @@ Reviewed: [confirmed target]
 Base / head: [base] / [head SHA]
 Publication: [PR # / local only]
 Reviewers: [selected analysis reviewers] + validation reviewer [run / not needed]
+Context snapshot: [target-bound files/manifests, omitted optional files, warnings, or "empty"]
 
 **Headline takeaway:** [most important finding, or "No findings"]
 

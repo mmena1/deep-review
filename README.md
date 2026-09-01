@@ -46,6 +46,8 @@ Every surviving finding is assigned an action based on its severity, evidence st
 
 The coordinator creates a unique run directory under `/tmp/deep-review-runs/` and one Git worktree per reviewer. Reviewers may write probes only in their assigned workspace; the coordinator owns cleanup after every exit path.
 
+When repository intent or conventions live in ignored files, the coordinator creates one target-bound, read-only context snapshot under `/tmp/deep-review-context/<run-id>/`. It keeps one canonical bundle and manifest, then gives each reviewer a manifest naming the bounded subset to read. Selection requires an explicit active-work reference, selected-context reference, bounded repository rule, or changed-path/tracked-instruction relevance to the resolved target; ambiguous local context is omitted or requires confirmation. Reviewers never receive context copies in their worktrees. Ignored context is private supplemental evidence and is not named or quoted in PR comments without explicit approval.
+
 ## Install
 
 Run:

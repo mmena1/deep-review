@@ -3,7 +3,7 @@
 Use this only for a confirmed GitHub PR when the user asks to add comments.
 
 1. Re-check the PR state and reviewed head SHA with `gh pr view --json state,mergedAt,headRefOid`. Stop if it is closed, merged, or changed.
-2. Draft concise inline comments in `references/review-tone.md` for Direct findings, Validated findings, and Unresolved Candidates the user explicitly chose to post.
+2. Draft concise inline comments in `references/review-tone.md` for Direct findings, Validated findings, and Unresolved Candidates the user explicitly chose to post. Use committed code and team-visible evidence whenever practical; ignored context is private/local and must not be named or quoted unless the user explicitly approves it.
 3. Get per-comment approval with target file/line.
 4. Re-check PR state and head SHA immediately before posting.
 5. Submit one review with `gh api POST /repos/{owner}/{repo}/pulls/{pull_number}/reviews`, `event: COMMENT`, an empty `body`, and the approved inline `comments` array. Add a top-level body only when the user explicitly requests a summary.
