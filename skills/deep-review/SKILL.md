@@ -22,19 +22,21 @@ Run one committed-target review predictably: **gate**, **resolve**, **analyze**,
 
 ## 1. Gate the caller repository
 
-Before resolving a target, asking for confirmation, creating a worktree, or launching a subagent:
+Before asking for confirmation, creating a worktree, or launching a subagent:
 
 1. Resolve the caller repository root with `git rev-parse --show-toplevel`. Stop if the caller is not inside a Git repository.
-2. Run `git -C <caller-root> status --porcelain`. Require no output. This rejects staged, unstaged, deleted, renamed, and untracked non-ignored files; ignored files remain exempt.
-3. Explain that this is a PR-gate review and stop with a clear message if the tree is not clean. Do not fall back to reviewing working-tree changes.
+2. Resolve the review target identity. An omitted target means the caller's current branch; stop if the caller is detached. An explicit PR, branch, or commit range remains the review target.
+3. Compare the resolved target with the caller checkout. The caller checkout must be clean only when it is itself the review target: an omitted/current-branch target, an explicitly named current branch, or a PR whose source branch is the caller's current branch. For a different target, the caller may be dirty.
+4. When cleanliness is required, run `git -C <caller-root> status --porcelain` and require no output. This rejects staged, unstaged, deleted, renamed, and untracked non-ignored files; ignored files remain exempt. Explain that the target overlaps the caller checkout and stop with a clear message if the tree is not clean.
+5. When the target is different, proceed without using the caller's working-tree changes as review input. They must not affect target resolution, diffs, findings, or publication.
 
-The gate applies to every invocation, including explicit PR identifiers, branches, and commit ranges. This initial result remains valid if the caller checkout changes later, because all reviewers use isolated worktrees.
+A current-branch mismatch is expected when the requested target is different. The gate applies to the target relationship, not to every invocation unconditionally. The recorded gate result remains valid if the caller checkout changes later, because all reviewers use isolated worktrees pinned to the resolved target.
 
-Complete when the caller root is recorded and a clean `git status --porcelain` result has been recorded for this invocation, or the invocation has been rejected.
+Complete when the caller root, target identity, overlap decision, and—when required—clean `git status --porcelain` result have been recorded, or the invocation has been rejected.
 
 ## 2. Resolve the committed target
 
-1. Require an argument containing a PR number/URL, branch, or commit range. Do not auto-detect working-tree changes. Do not accept a standalone commit or ad-hoc file paths as review targets; ask for the containing branch, range, or PR instead.
+1. If no target argument is supplied, use the caller's current branch. Otherwise accept a PR number/URL, branch, or commit range. Do not auto-detect working-tree changes beyond this explicit current-branch default. Do not accept a standalone commit or ad-hoc file paths as review targets; ask for the containing branch, range, or PR instead.
 2. For a PR, collect its number, repository, base ref, head ref, head SHA, state, and diff. For a branch or commit range, resolve its base, head SHA, and diff; look up an associated open PR without substituting it for the supplied target.
 3. Echo the resolved target, base, head, associated PR (or lack of one), and review mode. Ask the user to confirm before fetching refs or creating review workspaces.
 4. A branch or commit range with no unique open PR is a local, non-posting review. Require an explicit PR number/URL before publishing comments.

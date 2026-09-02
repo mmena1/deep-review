@@ -1,12 +1,15 @@
 # deep-review
 
-A Devin skill for strict PR-gate code review. It takes a PR, branch, or commit range and runs multiple specialized reviewers in isolated worktrees, validates uncertain findings, and presents an actionable report — optionally posting inline comments to the PR. Every run requires a clean caller repository and reviews committed targets only.
+A Devin skill for strict PR-gate code review. It takes a PR, branch, or commit range and runs multiple specialized reviewers in isolated worktrees, validates uncertain findings, and presents an actionable report — optionally posting inline comments to the PR. It reviews committed targets only. If no target is supplied, it reviews the current branch; a clean caller checkout is required only when the caller checkout is the review target.
 
 ## How it works
 
 The skill runs as a six-step pipeline:
 
-1. **Gate & resolve** — Require a clean caller repository, then lock the committed review target (PR, branch, or range). Create isolated reviewer worktrees so the user's checkout is never touched.
+1. **Gate & resolve** — Resolve the target (defaulting to the current branch when omitted), then require a clean caller repository only when the caller checkout overlaps that target. A different PR, branch, or range may be reviewed from a dirty caller checkout; its working-tree changes are excluded. Lock the committed target and create isolated reviewer worktrees so the user's checkout is never touched.
+
+For example, a clean or dirty checkout of `feature-a` can review a different PR from `feature-b` into `main`. A review of the current branch, whether requested explicitly or by omitting the target, requires `feature-a` to be clean.
+
 2. **Context** — Collect changed files, diff, commit history, project conventions, and stated intent from the target.
 3. **Choose reviewers** — Classify the diff and recommend a subset of analysis reviewers. The user confirms or adjusts.
 4. **Analyze** — Launch selected reviewers in parallel in independent disposable worktrees. Each reports **Direct findings** (settled with sufficient evidence) or **Candidate findings** (credible but unsettled within its permissions, environment, or reasonable verification budget). Specialists may use bounded disposable probes without requiring execution when static evidence is decisive.

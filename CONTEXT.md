@@ -14,9 +14,13 @@ The **coordinator** owns the lifecycle of the review workspace and reviewer work
 
 **Cleanup** is a separate coordinator-owned phase that runs after all reviewers finish, including when a reviewer fails, times out, or is cancelled. Cleanup removes only artifacts inside the review workspace.
 
-A **PR gate review** is a review run that may start only from a clean caller repository state. It evaluates committed review targets and does not treat working-tree changes or ad-hoc file paths as review targets.
+A **caller checkout** is the repository and checked-out branch from which a review run starts. It is launch context, not necessarily the review target.
 
-A **clean caller repository state** has no staged, unstaged, deleted, renamed, or untracked non-ignored files. Ignored files do not affect this state.
+A **review target** is the committed PR, branch, or commit range being reviewed. When no target is supplied, the caller's current branch is the review target; a detached caller has no implicit target.
+
+A **PR gate review** is a review run whose caller checkout must be clean when it overlaps the review target. An omitted/current-branch target, an explicitly named current branch, or a PR whose source branch is the caller's current branch overlaps it. A different target may be reviewed from a dirty caller checkout, but working-tree changes never become review input.
+
+A **clean caller repository state** has no staged, unstaged, deleted, renamed, or untracked non-ignored files. Ignored files do not affect this state. It is required only when the caller checkout overlaps the review target.
 
 An **ignored context artifact** is local repository material excluded from Git tracking that may provide supplemental intent, requirements, architecture, standards, or decision context for a review target.
 
