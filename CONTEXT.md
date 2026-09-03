@@ -33,3 +33,13 @@ A **target-binding basis** is the explicit active-work reference, selected-conte
 **Operational instructions** from the materialized target govern reviewer behavior. Ignored context is supplemental evidence unless supported repository configuration explicitly designates it otherwise.
 
 A **publication boundary** separates private/local context used for reasoning from team-visible evidence suitable for a GitHub review comment. Ignored context does not cross that boundary automatically.
+
+A **comment scope** describes the semantic breadth of a review comment: a **point comment** addresses one precise incorrect statement, a **method/design comment** addresses an implementation or design as a whole, and a **compact range comment** addresses one issue demonstrated collectively by adjacent lines.
+
+A **source anchor** is the code location selected to represent a comment's scope. A source anchor may be a single line, a method or function declaration, or a bounded contiguous range. **Semantic representativeness** means that the anchor is the smallest source location that credibly makes the comment's claim intelligible.
+
+**Publication coordinates** are the GitHub-specific path, line or range, side, and head information used to encode a source anchor. **Mechanical validity** means that those coordinates are well-formed, refer to the intended diff side and current head, and satisfy GitHub's changed-line constraints. Mechanical validity does not establish semantic representativeness.
+
+An **anchor fallback** is an explicitly recorded substitution of the smallest relevant changed line or compact range when the semantically preferred anchor is not commentable. A fallback preserves the comment's scope in its wording and rationale; an arbitrary nearest line is not a valid fallback.
+
+**Coordinate remapping** is GitHub's post-publication attempt to map an original anchor onto a later head. A missing current `line` with intact original coordinates is remapping state, not evidence that the initial anchor was invalid.
