@@ -17,6 +17,9 @@ Context snapshot: [target-bound files/manifests, omitted optional files, warning
 
 1. **Title** — Direct | Validated | Action: fix-now
    File: path/to/file:line
+   Comment scope: point | method/design | compact range
+   Source anchor: [single line, declaration, or start/end range with diff side]
+   Anchor rationale: [why this is the smallest semantically representative location]
    Severity: blocker | high | medium | low
    Evidence: [source evidence or validation result]
    Why it matters: [impact]
@@ -26,6 +29,9 @@ Context snapshot: [target-bound files/manifests, omitted optional files, warning
 
 1. **Title** — Direct | Validated | Action: discuss
    File: path/to/file:line
+   Comment scope: point | method/design | compact range
+   Source anchor: [single line, declaration, or start/end range with diff side]
+   Anchor rationale: [why this is the smallest semantically representative location]
    Severity: blocker | high | medium | low
    Evidence: [source evidence or validation result]
    Why it matters: [impact]
@@ -35,6 +41,9 @@ Context snapshot: [target-bound files/manifests, omitted optional files, warning
 
 1. **Title** — Direct | Validated | Action: follow-up
    File: path/to/file:line
+   Comment scope: point | method/design | compact range
+   Source anchor: [single line, declaration, or start/end range with diff side]
+   Anchor rationale: [why this is the smallest semantically representative location]
    Severity: blocker | high | medium | low
    Evidence: [source evidence or validation result]
    Why it matters: [impact]
