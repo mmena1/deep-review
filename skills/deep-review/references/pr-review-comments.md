@@ -2,7 +2,7 @@
 
 Use this only for a confirmed GitHub PR when the user asks to add comments.
 
-1. Re-check PR state and `reviewedHeadSha` with `gh pr view --json state,mergedAt,headRefOid`. Stop if closed, merged, or changed; a stale pinned result cannot be published.
+1. Re-check PR state and `headRefOid` with `gh pr view --json state,mergedAt,headRefOid`, then compare `headRefOid` with the recorded reviewed head SHA. Stop if closed, merged, or changed; a stale pinned result cannot be published.
 2. Draft inline comments only for Findings and user-selected Unresolved items. Use committed code and team-visible evidence whenever practical; private ignored context is not named or quoted without explicit approval.
 3. Findings use assertive defect language supported by validator evidence. An Unresolved item is posted only after explicit per-item approval and must be a question describing observed evidence and what remains unsettled; it must not assert a defect.
 4. For every comment, declare scope: point, method/design, or compact range. Record the smallest semantically representative source anchor and rationale.

@@ -14,9 +14,6 @@ permissions:
     - Exec(git log)
     - Exec(git show)
     - Exec(git status)
-    - Exec(git worktree)
-    - Exec(git reset)
-    - Exec(git clean)
 ---
 
 # Deep Review
@@ -29,16 +26,16 @@ Read `references/review-protocol.md` before coordinating. It is the canonical st
 
 1. Resolve the repository root with `git rev-parse --show-toplevel`; stop outside Git.
 2. Resolve the target: current branch when omitted, otherwise PR, branch, or commit range. Stop for a detached omitted target or standalone commit/file target.
-3. Require `git status --porcelain` to be empty only when the caller checkout overlaps the target. A different target excludes caller working-tree changes.
-4. For a PR, capture repository, number, base, head ref, head SHA, state, diff, and merge ref. For branches/ranges, resolve base, head SHA, diff, and any associated open PR without replacing the requested target.
-5. Echo target, base/head, publication eligibility, and review mode; obtain confirmation before fetching refs or creating workspaces.
+3. Define overlap explicitly: an omitted/current-branch target, an explicitly named current branch, or a PR whose source branch is the caller's current branch overlaps the caller checkout. Require `git status --porcelain` to be empty only in those cases; a different target excludes caller working-tree changes.
+4. For a PR, capture repository, number, base, head ref, head SHA, state, diff, and merge ref. For branches/ranges, resolve base, head SHA, diff, and any associated open PR without replacing the requested target. A branch or range without a unique open PR is local and non-posting; require an explicit PR number or URL before publication.
+5. Echo target, base/head, associated PR or lack of one, publication eligibility, and review mode; obtain confirmation before fetching refs or creating workspaces.
 
 ## Context and one shared worktree
 
 1. Select valuable scout dimensions and obtain confirmation.
-2. Capture the immutable target-bound context snapshot with `manifest`, `core-manifest`, and one `reviewers/<scout>-manifest` per selected scout. Preserve existing provenance, size, privacy, tracked-instruction authority, and bounded selection rules. Do not create a validator manifest yet.
+2. Capture the immutable target-bound context snapshot with `manifest`, `core-manifest`, and one `reviewers/<scout>-manifest` per selected scout. Apply each in-scope `deep-review-context` declaration from the governing tracked instruction chain only when it names one exact relative path or bounded glob using `required:` or `optional-glob:`; active-work references and selected-artifact references must be explicit relative paths. Preserve repository-relative source path, bundle path, target-binding reasons, repository identity, base/head SHAs, capture metadata, SHA-256, size, required/optional status, and selection reasons in canonical provenance. Accept regular files only; reject symlinks, special files, traversal, external paths, and normalized collisions. Limit artifacts to 2 MiB and the bundle to 16 MiB, check size/mtime before and after copying with one retry, stop on required failures, omit optional failures with a warning, and create an explicit empty bundle when nothing is selected. The snapshot is immutable and read-only after capture. Do not create a validator manifest yet.
 3. Create exactly one uniquely named coordinator-owned Git worktree under the run directory. Materialize the pinned target as the existing merge result: PR merge ref when available, otherwise the established fallback; for branches/ranges, merge head into base when clean or use resolved head otherwise. Leave the caller checkout untouched.
-4. Record the exact baseline and verify it. All scouts receive the same worktree concurrently, plus the context root and their bounded manifests. Never create per-scout worktrees.
+4. Record the exact baseline and verify it. All scouts receive the same worktree concurrently, plus the context root and their bounded manifests. Never create per-scout worktrees. Request narrowly scoped approval for the exact `git worktree add` operation and its coordinator-owned path; do not pre-authorize destructive Git commands globally.
 
 ## Read-only scouting
 
@@ -54,11 +51,11 @@ After successful scouting, conservatively deduplicate hypotheses: merge only the
 
 Invoke the validator sequentially once per canonical hypothesis, passing exactly one hypothesis each time and the same shared worktree. The validator tries to falsify first, uses static evidence when decisive, and runs the smallest focused check only when needed. It returns exactly one `Finding`, `Disproved`, or `Unresolved` and no unrelated issue.
 
-Before the next invocation, preserve the outcome/evidence outside disposable state, restore the worktree to the exact recorded baseline, clean tracked/untracked/ignored artifacts as needed, and verify the baseline. Restoration failure stops validation, marks the run incomplete, and leaves later hypotheses explicitly not validated due to review failure. Validator failure preserves completed outcomes, marks unattempted hypotheses the same way, and blocks publication.
+Before the next invocation, preserve the outcome/evidence outside disposable state, request narrowly scoped approval for exact reset/cleanup commands limited to the coordinator-created worktree, restore that worktree to the exact recorded baseline, clean tracked/untracked/ignored artifacts as needed, and verify the baseline. Restoration failure stops validation, marks the run incomplete, and leaves later hypotheses explicitly not validated due to review failure. Validator failure preserves completed outcomes, marks unattempted hypotheses the same way, and blocks publication.
 
 ## Present, freshness, and publication
 
-Use `references/output-template.md`. Report hypotheses discovered, hypotheses after dedupe, and outcome counts. Classify Findings by final severity × fix size into `fix-now`, `discuss`, and `follow-up`. Unresolved is separate, always `discuss`, and never a Finding. Do not expose scout provenance in normal Finding text.
+Use `references/output-template.md`. Report hypotheses discovered, hypotheses after dedupe, and outcome counts. Apply the deterministic action policy: every Finding with a small, unambiguous fix of about 20 changed lines or fewer is `fix-now`; every Finding with a larger or cross-module fix is `follow-up`; every Unresolved outcome is separate and always `discuss`. Do not expose scout provenance in normal Finding text.
 
 Before presenting a result as current/actionable or publishing, re-check target freshness. If the PR head changed, report reviewed and current SHAs, mark the result stale, and require a rerun.
 
@@ -66,4 +63,4 @@ Use `references/pr-review-comments.md` for publication. Findings may be drafted 
 
 ## Coordinator cleanup
 
-After every exit path, preserve the final report and evidence, remove only the exact coordinator-created worktree with the narrowest Git worktree mechanism, verify its registration is gone, then remove the matching context snapshot and run directory only after preservation checks pass. Report exact leftovers if cleanup is interrupted.
+After every exit path, preserve the final report and evidence, request narrowly scoped approval for the exact coordinator-created worktree cleanup path, remove only that worktree with the narrowest Git worktree mechanism, verify its registration is gone, then remove the matching context snapshot and run directory only after preservation checks pass. Report exact leftovers if cleanup is interrupted.

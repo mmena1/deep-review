@@ -11,8 +11,25 @@ Validation: [run / not needed / incomplete]
 Context snapshot: [target-bound files/manifests, omitted optional files, warnings, or "empty"]
 
 **Pipeline:** Hypotheses [discovered] → [after dedupe]; Validation [findings] Finding, [disproved] Disproved, [unresolved] Unresolved
+**Status:** complete | stale | **Review incomplete** — [scout/validator failure and affected hypotheses]
 
-**Headline takeaway:** [most important Finding, or "No findings"]
+**Headline takeaway:** [most important Finding, "No findings" only when complete with zero Findings and zero Unresolved items, or "Review incomplete"]
+
+### Action policy
+
+For complete, current runs, classify each Finding deterministically by final severity and fix size:
+
+| Final severity | Fix size | Action |
+|---|---|---|
+| blocker, high, medium, or low | small and unambiguous (about 20 changed lines or fewer) | fix-now |
+| blocker, high, medium, or low | larger than about 20 lines or cross-module | follow-up |
+
+Unresolved items always map to `discuss`. Incomplete or stale runs have no actionable PASS result and cannot publish.
+
+### Review failure
+
+When the run is incomplete, preserve completed outcomes but list every unattempted hypothesis as **Not validated due to review failure**. Do not render the report as `No findings`, PASS, current, or publishable.
+
 
 ### Findings
 
