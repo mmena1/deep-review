@@ -68,7 +68,7 @@ Prefer suggestions that make the implementation smaller, more direct, and easier
 - Report only structural findings; style preferences belong in the conventions review.
 - Suggest a new abstraction only when it removes more complexity than it adds.
 - If no concrete simplification is visible, report no finding.
-- Report direct findings when source evidence establishes the concern; otherwise report a candidate finding with a falsifiable validation hypothesis.
+- Report an admission-qualified Hypothesis when source evidence establishes a credible concern and state a falsifiable validation condition; the validator assigns the final outcome.
 
 ## Useful Review Language
 
