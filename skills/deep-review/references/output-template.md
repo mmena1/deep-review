@@ -13,7 +13,7 @@ Context snapshot: [target-bound files/manifests, omitted optional files, warning
 **Pipeline:** Hypotheses [discovered] → [after dedupe]; Validation [findings] Finding, [disproved] Disproved, [unresolved] Unresolved
 **Status:** complete | stale | **Review incomplete** — [scout/validator failure and affected hypotheses]
 
-**Headline takeaway:** [most important Finding, "No findings" only when complete with zero Findings and zero Unresolved items, or "Review incomplete"]
+**Headline takeaway:** [most important Finding, "No findings" when complete with zero Findings and zero Unresolved items, "<N> unresolved item(s) need discussion" when complete with no Findings but Unresolved items, or "Review incomplete"]
 
 ### Action policy
 
