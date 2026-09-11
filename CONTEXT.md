@@ -16,10 +16,16 @@ An **ignored context artifact** is local material excluded from Git tracking tha
 
 A **context snapshot** is one immutable, coordinator-owned collection of selected ignored artifacts. A **reviewer context manifest** identifies the core and bounded entries a scout or validator should read; it does not copy artifacts.
 
+**Mechanical context capture** is the fixed coordinator or harness operation that copies validated artifact bytes without model-authored reconstruction or generated per-run capture machinery.
+
+A **run state** is the consolidated coordinator-owned record of baseline, provenance, hypotheses, validation outcomes, report data, incomplete status, and cleanup status that must survive disposable worktree changes.
+
 **Operational instructions** from the materialized target govern behavior. Ignored context is supplemental evidence unless supported repository configuration explicitly designates it otherwise.
 
 A **hypothesis** is an admission-qualified scout concern grounded in changed code or a changed behavior-bearing path. A **Finding** is independently established by the validator. **Disproved** rejects a hypothesis. **Unresolved** is attempted but unsettled and is not a Finding.
 
 A **publication boundary** separates private/local context from team-visible evidence suitable for a GitHub review comment. Ignored context does not cross it automatically.
+
+A **publication payload** is the exact team-visible review content approved for publication, preserved with its publication receipt when publication occurs.
 
 A **comment scope** describes a point, method/design, or compact range comment. A **source anchor** is the smallest semantically representative code location. Publication coordinates must be mechanically valid for the current head as well as semantically representative.
