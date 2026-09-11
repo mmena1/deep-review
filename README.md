@@ -10,10 +10,10 @@ The pipeline is:
 2. **Context** — Collect the changed files, diff, commit history, project conventions, stated intent, and target-bound immutable context manifests.
 3. **Choose scouts** — Select review dimensions and give each a bounded context manifest.
 4. **Scout** — Run selected specialists concurrently against exactly one coordinator-owned worktree. Scouts are read-only and emit only admission-qualified hypotheses or no hypotheses.
-5. **Deduplicate & validate** — Deduplicate conservatively, preserve evidence and origins, create a late-bound validator manifest, and invoke the validator sequentially once per canonical hypothesis. Each invocation returns Finding, Disproved, or Unresolved.
+5. **Deduplicate & validate** — Deduplicate conservatively, preserve evidence and origins, create one late-bound validator manifest, statically adjudicate every canonical hypothesis concurrently, then run only `Needs probe` hypotheses through sequential writable probes. Final outcomes are Finding, Disproved, or Unresolved.
 6. **Present & decide** — Report discovery/dedupe/outcome counts, classify Findings by final severity × fix size, map Unresolved to `discuss`, and offer next steps.
 
-The validator first tries to falsify and may use decisive static evidence or the smallest focused check. No hypothesis becomes a Finding without validator establishment. If successful scouts produce zero hypotheses, the validator is not invoked and the report explicitly says all selected dimensions completed with nothing to validate. Any scout or validator failure makes the run incomplete and blocks PASS, `No findings`, and publication. A changed PR head makes the pinned result stale until rerun.
+Static validators first try to falsify using read-only evidence and may return the internal `Needs probe` transition only when a bounded writable check is materially useful. No hypothesis becomes a Finding without validator establishment. If successful scouts produce zero hypotheses, the validator is not invoked and the report explicitly says all selected dimensions completed with nothing to validate. Any scout, static validator, writable validator, or restoration failure makes the run incomplete and blocks PASS, `No findings`, and publication. A changed PR head makes the pinned result stale until rerun.
 
 ### Reviewers
 
@@ -34,7 +34,7 @@ Findings may be published as assertive comments supported by validator evidence.
 - `skills/deep-review/` — the `/deep-review` skill and protocol references
 - `agents/` — scout and validator profiles
 
-The coordinator creates one Git worktree per run under `/tmp/deep-review-runs/`, gives scouts read-only access, then gives the validator writable access to that same worktree. The coordinator restores the pinned baseline between hypotheses and owns final cleanup. Context snapshots remain separate, immutable, target-bound, and privacy-aware.
+The coordinator creates one Git worktree per run under `/tmp/deep-review-runs/`, gives scouts and static validators concurrent read-only access, then gives sequential writable probes access to that same worktree only when static adjudication returns `Needs probe`. The coordinator restores the pinned baseline between writable probes and owns final cleanup. Context snapshots remain separate, immutable, target-bound, and privacy-aware.
 
 ## Install
 

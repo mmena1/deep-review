@@ -1,8 +1,14 @@
 # Review Protocol
 
-The active review state machine is:
+The public review state machine is:
 
-`hypothesis → validator → finding | disproved | unresolved`
+`hypothesis → finding | disproved | unresolved`
+
+The operational validation flow is:
+
+`hypothesis → static adjudication → finding | disproved | unresolved | needs probe → writable probe → finding | disproved | unresolved`
+
+`Needs probe` is an internal transitional state only and is never exposed in reports or publication.
 
 ## Hypotheses
 
@@ -33,13 +39,18 @@ The coordinator merges hypotheses only when they describe the same behavioral fa
 
 ## Validation outcomes
 
-The validator receives exactly one canonical hypothesis per invocation and returns exactly one outcome:
+The validator receives exactly one canonical hypothesis per invocation. Every hypothesis enters a concurrent static adjudication wave against the same pinned worktree under a read-only contract. A static invocation returns exactly one of:
 
-- **Finding** — the validator independently establishes the hypothesis through decisive static evidence or the smallest targeted check. Finding includes final severity and evidence of actual reachability and impact. The bare term carries the independent-validation guarantee.
-- **Disproved** — a concrete invariant, guard, contract, test, or other evidence rejects the hypothesis. It is not user-visible.
-- **Unresolved** — bounded validation cannot establish or reject the hypothesis. It is not a Finding and maps to `discuss`.
+- **Finding** — decisive static evidence independently establishes the hypothesis, including final severity and evidence of actual reachability and impact.
+- **Disproved** — concrete static evidence such as an invariant, guard, contract, or test rejects the hypothesis. It is not user-visible.
+- **Unresolved** — static adjudication cannot establish or reject the hypothesis and no meaningful writable check can settle it. It maps to `discuss`.
+- **Needs probe** — static evidence cannot settle the hypothesis, but a bounded writable check can materially answer a specific unresolved factual question. It must include the unresolved question, why static evidence is insufficient, and the cheapest decisive check. This is an internal transition only.
 
-The validator first tries to falsify, checks callers, guards, invariants, contracts, tests, configuration, instructions, and relevant context, and uses a focused probe only when static reasoning cannot settle the claim. It reports no unrelated discoveries, and assigns final severity only for a Finding. A hypothesis not attempted because of operational failure is **not validated due to review failure**, not Unresolved.
+After the complete static wave, the coordinator queues only `Needs probe` hypotheses for sequential writable validation, ordered by canonical hypothesis ID. Each writable invocation receives exactly one canonical hypothesis plus its unresolved question and proposed check, independently adjudicates the full hypothesis, and returns exactly one final `Finding`, `Disproved`, or `Unresolved` outcome.
+
+Static validators may read/search repository files and use read-only Git inspection. They must not run builds, tests, linters, typecheckers, scripts, probes, package-manager commands, or other commands that can create filesystem artifacts. Writable probes use the existing exact-baseline restoration and contamination protections.
+
+Every validator first tries to falsify, checks callers, guards, invariants, contracts, tests, configuration, instructions, and relevant context, and reports no unrelated issue. A hypothesis not attempted because of operational failure is **not validated due to review failure**, not Unresolved.
 
 ## Context capture and persisted run state
 
@@ -49,12 +60,14 @@ The coordinator persists protocol state in one coordinator-owned `run-state.json
 
 ## Pipeline invariants
 
-- All selected scouts inspect one pinned coordinator-owned worktree concurrently and read-only. The validator later receives writable access to that same disposable worktree.
-- The validator runs for every deduplicated hypothesis, and never runs when successful scouting produces zero hypotheses.
-- Exactly one late-bound `reviewers/validator-manifest` is created when hypotheses survive; it is derived from those hypotheses and reused for sequential adjudications.
+- All selected scouts inspect one pinned coordinator-owned worktree concurrently and read-only. Static validators later inspect that same disposable worktree concurrently under a read-only contract; writable probes receive access sequentially.
+- Every deduplicated hypothesis enters the static adjudication wave, and no validator runs when successful scouting produces zero hypotheses.
+- Exactly one late-bound `reviewers/validator-manifest` is created when hypotheses survive; it is derived from those hypotheses and reused for all static and writable invocations.
+- The coordinator waits for the complete static wave before starting writable probes. Only completed `Needs probe` outcomes enter the writable queue, ordered by canonical hypothesis ID.
+- Static validators never execute artifact-producing commands. A static-wave failure preserves completed outcomes, marks the review incomplete, and prevents writable probing for hypotheses without successful static adjudication.
 - Once each context artifact passes validation, it is copied exactly once with the fixed direct `cp` operation or selected harness equivalent; manifests reference the existing snapshot entry, and the model does not reconstruct artifact contents or generate capture machinery during a run.
 - Coordinator-owned protocol state is consolidated in one run state, including the exact publication payload when applicable, with final-report and publication-receipt artifacts created only under the conditions above.
 - Once the coordinator-owned worktree and exact baseline are established, restoration authorization is obtained once for that exact path or encapsulated in a coordinator-only helper that rejects other paths; no blanket `git reset` or `git clean` permission is granted. The coordinator preserves each outcome and evidence outside probe state, automatically restores the exact pinned baseline, cleans tracked, untracked, and ignored artifacts only in that worktree, and verifies `HEAD`, the tree, and `git status` before the next invocation. Restoration failure stops validation and marks the run incomplete.
-- Any scout or validator failure makes the run incomplete, prevents PASS/`No findings`, and prevents publication. Unattempted hypotheses remain explicitly not validated due to review failure.
+- Any scout, static validator, writable validator, or restoration failure makes the run incomplete, prevents PASS/`No findings`, and prevents publication. Unattempted hypotheses remain explicitly not validated due to review failure.
 - A changed PR head makes the pinned result stale. Report reviewed and current SHAs, and rerun before current-gate use or publication.
 - A Finding may be presented assertively. An Unresolved item may be published only with explicit approval and only as a question describing evidence and remaining uncertainty.
