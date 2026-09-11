@@ -26,4 +26,6 @@ A **hypothesis** is an admission-qualified scout concern grounded in changed cod
 
 A **publication boundary** separates private/local context from team-visible evidence suitable for a GitHub review comment. Ignored context does not cross it automatically.
 
+A **publication payload** is the exact team-visible review content approved for publication, preserved with its publication receipt when publication occurs.
+
 A **comment scope** describes a point, method/design, or compact range comment. A **source anchor** is the smallest semantically representative code location. Publication coordinates must be mechanically valid for the current head as well as semantically representative.
