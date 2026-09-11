@@ -1,17 +1,16 @@
 # Glossary
 
-- **Hypothesis** — A concrete concern about the committed target that can be tested or investigated.
-- **Direct finding** — A concern settled by the analysis reviewer with sufficient evidence. Evidence may come from deterministic source/control-flow analysis, existing tests, focused commands, or a disposable reproduction/probe. No validator investigation is required.
-- **Candidate finding** — A credible concern the analysis reviewer could not settle within its permissions, environment, or reasonable verification budget. It must contain a falsifiable validation hypothesis.
-- **Validated finding** — A Candidate subsequently confirmed by the validator.
-- **Disproved** — The hypothesis was tested or investigated sufficiently and rejected; do not report it as a finding.
-- **Unresolved** — The validator still cannot establish or disprove the Candidate.
+- **Hypothesis** — An admission-qualified scout concern about the committed target awaiting independent adjudication.
+- **Finding** — A hypothesis independently established by the validator with final severity and evidence of actual reachability and impact.
+- **Disproved** — A hypothesis rejected by validation; it is not user-visible.
+- **Unresolved** — Validation was attempted but could not establish or reject a hypothesis; it is not a Finding and maps to `discuss`.
+- **Not validated due to review failure** — A hypothesis the validator could not attempt because the run failed; it makes the review incomplete and is distinct from Unresolved.
 - **Stated intent** — The change goal expressed by the target PR or commits; `unknown` when neither source provides it.
-- **Action** — The recommended next step for a finding in the report. One of `fix-now`, `discuss`, or `follow-up`.
-- **fix-now** — A finding that is confirmed/likely, low-to-medium severity, and has a small unambiguous fix (about 20 changed lines or fewer). The report should include a concrete suggested fix.
-- **discuss** — A finding that needs author context, a tradeoff decision, or further validation before anyone writes code. Plausible evidence and unresolved candidates map here.
-- **follow-up** — A finding that is real but too large or out-of-scope for the current PR. The report should describe the follow-up scope rather than a code snippet.
+- **Action** — The recommended next step: `fix-now`, `discuss`, or `follow-up`.
+- **fix-now** — A Finding with a small, unambiguous fix based on final severity and fix size.
+- **discuss** — An Unresolved item or a Finding needing author context or a tradeoff decision.
+- **follow-up** — A Finding that is real but too large or out of scope for the current change.
 
-The state flow is:
+The protocol is defined in `references/review-protocol.md` and follows:
 
-`hypothesis → Direct if settled by specialist → discard if disproved → Candidate if still unsettled → validator → Validated / Disproved / Unresolved`
+`hypothesis → validator → finding | disproved | unresolved`

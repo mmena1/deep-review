@@ -1,59 +1,42 @@
 # deep-review
 
-A Devin skill for strict PR-gate code review. It takes a PR, branch, or commit range and runs multiple specialized reviewers in isolated worktrees, validates uncertain findings, and presents an actionable report — optionally posting inline comments to the PR. It reviews committed targets only. If no target is supplied, it reviews the current branch; a clean caller checkout is required only when the caller checkout is the review target.
+A Devin skill for strict PR-gate code review. It takes a PR, branch, or commit range and runs multiple read-only scouts against one pinned review worktree, independently adjudicates every surviving hypothesis, and presents an actionable report — optionally posting inline comments to the PR. It reviews committed targets only.
 
 ## How it works
 
-The skill runs as a six-step pipeline:
+The pipeline is:
 
-1. **Gate & resolve** — Resolve the target (defaulting to the current branch when omitted), then require a clean caller repository only when the caller checkout overlaps that target. A different PR, branch, or range may be reviewed from a dirty caller checkout; its working-tree changes are excluded. Lock the committed target and create isolated reviewer worktrees so the user's checkout is never touched.
+1. **Gate & resolve** — Resolve and pin the committed target, requiring a clean caller checkout only when it overlaps the target. The caller checkout is never modified.
+2. **Context** — Collect the changed files, diff, commit history, project conventions, stated intent, and target-bound immutable context manifests.
+3. **Choose scouts** — Select review dimensions and give each a bounded context manifest.
+4. **Scout** — Run selected specialists concurrently against exactly one coordinator-owned worktree. Scouts are read-only and emit only admission-qualified hypotheses or no hypotheses.
+5. **Deduplicate & validate** — Deduplicate conservatively, preserve evidence and origins, create a late-bound validator manifest, and invoke the validator sequentially once per canonical hypothesis. Each invocation returns Finding, Disproved, or Unresolved.
+6. **Present & decide** — Report discovery/dedupe/outcome counts, classify Findings by final severity × fix size, map Unresolved to `discuss`, and offer next steps.
 
-For example, a clean or dirty checkout of `feature-a` can review a different PR from `feature-b` into `main`. A review of the current branch, whether requested explicitly or by omitting the target, requires `feature-a` to be clean.
-
-2. **Context** — Collect changed files, diff, commit history, project conventions, and stated intent from the target.
-3. **Choose reviewers** — Classify the diff and recommend a subset of analysis reviewers. The user confirms or adjusts.
-4. **Analyze** — Launch selected reviewers in parallel in independent disposable worktrees. Each reports **Direct findings** (settled with sufficient evidence) or **Candidate findings** (credible but unsettled within its permissions, environment, or reasonable verification budget). Specialists may use bounded disposable probes without requiring execution when static evidence is decisive.
-5. **Settle** — A validation reviewer probes every Candidate with targeted checks, producing **Validated findings**, **Unresolved** Candidates, or **Disproved** hypotheses (dropped). Only Candidates reach validation.
-6. **Present & decide** — Group all surviving findings by action (**fix now**, **discuss**, **follow-up**) and offer next steps: apply fixes, post a PR review, or dismiss.
+The validator first tries to falsify and may use decisive static evidence or the smallest focused check. No hypothesis becomes a Finding without validator establishment. If successful scouts produce zero hypotheses, the validator is not invoked and the report explicitly says all selected dimensions completed with nothing to validate. Any scout or validator failure makes the run incomplete and blocks PASS, `No findings`, and publication. A changed PR head makes the pinned result stale until rerun.
 
 ### Reviewers
 
-You pick from five analysis reviewers depending on what changed:
-
 | Reviewer | Focus |
 |---|---|
-| `bugs` | Bug detection and test coverage gaps |
+| `bugs` | Bug detection and behavior coverage |
 | `structural` | Maintainability of changed production logic |
 | `conventions` | Code style and project standards |
 | `history` | Regression risk from commit history |
-| `docs` | Accuracy of comments, TODOs, and doc claims |
+| `docs` | Accuracy of comments, TODOs, and documentation claims |
 
-### Validation
+### Publication
 
-A **Direct finding** is settled by the analysis reviewer with sufficient evidence from deterministic source/control-flow analysis, existing tests, focused commands, or a disposable reproduction/probe; no validator investigation is required. A **Candidate finding** is credible but could not be settled within the reviewer's permissions, environment, or reasonable verification budget and must include a falsifiable validation hypothesis. Candidates go through validation, which returns **Validated**, **Disproved**, or **Unresolved**.
-
-### Actions
-
-Every surviving finding is assigned an action based on its severity, evidence strength, and fix size:
-
-| Action | Meaning | The report includes |
-|---|---|---|
-| **Fix now** | Small, unambiguous fix (roughly 20 lines or fewer) with confirmed or likely evidence | A concrete code suggestion |
-| **Discuss** | Needs author context, a tradeoff decision, or further investigation before anyone writes code | A discussion prompt |
-| **Follow-up** | Real issue, but too large or out-of-scope for this PR | A description of the follow-up scope |
+Findings may be published as assertive comments supported by validator evidence. An Unresolved item may be posted only with explicit per-item approval and must be a question describing evidence and remaining uncertainty. Semantic anchors, changed-line validation, freshness checks, private-context safeguards, and comment-count verification remain required.
 
 ## Contents
 
-- `skills/deep-review/` — the `/deep-review` skill
-- `agents/` — `code-reviewer`, `code-reviewer-structural`, and `code-reviewer-validator` subagent profiles
+- `skills/deep-review/` — the `/deep-review` skill and protocol references
+- `agents/` — scout and validator profiles
 
-The coordinator creates a unique run directory under `/tmp/deep-review-runs/` and one Git worktree per reviewer. Reviewers may write probes only in their assigned workspace; the coordinator owns cleanup after every exit path.
-
-When repository intent or conventions live in ignored files, the coordinator creates one target-bound, read-only context snapshot under `/tmp/deep-review-context/<run-id>/`. Initial setup creates `manifest`, `core-manifest`, and one `reviewers/<reviewer>-manifest` for each selected analysis reviewer. If deduplicated Candidate findings remain, the coordinator later derives `reviewers/validator-manifest` from the same immutable snapshot, including only context relevant to those Candidates; with no Candidates, it creates no validator manifest or worktree and proceeds to presentation. Supported repository declarations use exact relative paths or bounded globs in the governing instruction chain, such as `deep-review-context required: CONTEXT.md` or `deep-review-context optional-glob: docs/adr/*.md`; other prose does not authorize discovery. Each artifact is limited to 2 MiB and the bundle to 16 MiB. Selection must bind to the resolved target; ambiguous local context is omitted or requires confirmation. Reviewers never receive context copies in their worktrees. Ignored context is private supplemental evidence and is not named or quoted in PR comments without explicit approval.
+The coordinator creates one Git worktree per run under `/tmp/deep-review-runs/`, gives scouts read-only access, then gives the validator writable access to that same worktree. The coordinator restores the pinned baseline between hypotheses and owns final cleanup. Context snapshots remain separate, immutable, target-bound, and privacy-aware.
 
 ## Install
-
-Run:
 
 ```sh
 ./install.sh
@@ -63,4 +46,4 @@ This symlinks the skill and agents into `~/.config/devin/skills/` and `~/.config
 
 ## Update
 
-Edit files in this repo (or through the symlinks in `~/.config/devin/`), then commit the changes. Run `./install.sh` when you need to refresh the installed symlinks.
+Edit files in this repo (or through the symlinks), then commit the changes. Run `./install.sh` when you need to refresh installed symlinks.

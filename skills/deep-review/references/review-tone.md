@@ -100,8 +100,8 @@ Each finding's `Action` determines the comment voice:
 When drafting inline comments from consolidated findings:
 
 1. Omit the internal report's severity, evidence, and validation fields from an inline comment.
-2. Classify the finding as direct, validated, or a user-selected unresolved question. Use the matching pattern above.
-3. State direct and validated findings directly. Preserve the uncertainty of an unresolved question rather than presenting it as established fact.
+2. Classify the outcome as Finding or a user-selected Unresolved question. Use the matching pattern above.
+3. State Findings directly. Preserve the uncertainty of an Unresolved question rather than presenting it as established fact.
 4. Include a code block only when the fix is short and unambiguous; otherwise describe the change in one sentence.
 5. If the same nit applies to multiple locations, state it fully once and shorten later comments.
 6. Run the final comment through **Keep comments human** without changing the finding's certainty or meaning.
