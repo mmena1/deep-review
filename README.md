@@ -34,7 +34,7 @@ Findings may be published as assertive comments supported by validator evidence.
 - `skills/deep-review/` — the `/deep-review` skill and protocol references
 - `agents/` — scout and validator profiles
 
-The coordinator creates one Git worktree per run under `/tmp/deep-review-runs/`, gives scouts and static validators concurrent read-only access, then gives sequential writable probes access to that same worktree only when static adjudication returns `Needs probe`. The coordinator restores the pinned baseline between writable probes and owns final cleanup. Context snapshots remain separate, immutable, target-bound, and privacy-aware.
+The coordinator creates one Git worktree per run under `/tmp/deep-review-runs/`, gives scouts and static validators concurrent read-only access, then gives sequential writable probes access to that same worktree only when static adjudication returns `Needs probe`. It verifies the exact pinned baseline after static adjudication and restores, cleans, and verifies that baseline before every writable probe, including the first. Context snapshots remain separate, immutable, target-bound, and privacy-aware.
 
 ## Install
 

@@ -28,20 +28,20 @@ A static invocation returns exactly one outcome for the supplied hypothesis:
 - **Hypothesis:** H<number> and original scout ID(s)
 - **File/line:** repository-relative path and line
 - **Severity:** blocker | high | medium | low (final severity)
-- **Evidence:** decisive static evidence establishing reachability and impact
+- **Evidence:** decisive static or bounded-check evidence establishing reachability and impact
 - **Impact:** what fails and under which input or state
 - **Recommendation:** smallest clear remediation
 
 ### Disproved
 - **Hypothesis:** H<number> and original scout ID(s)
 - **File/line:** repository-relative path and line
-- **Evidence:** concrete static invariant, guard, contract, or other evidence rejecting it
+- **Evidence:** concrete static invariant, guard, contract, bounded check, or other evidence rejecting it
 
 ### Unresolved
 - **Hypothesis:** H<number> and original scout ID(s)
 - **File/line:** repository-relative path and line
-- **Evidence:** source evidence and attempted static validation
-- **Remaining question:** what could not be established statically
+- **Evidence:** source evidence and attempted static or bounded validation
+- **Remaining question:** what could not be established
 - **Needs confirmation:** what the author or user must establish
 
 ### Needs probe
