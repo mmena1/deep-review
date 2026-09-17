@@ -2,7 +2,7 @@
 
 ## Review run
 
-A **review run** is one coordinated execution of multiple read-only scouts and sequential validator adjudications.
+A **review run** is one coordinated execution of multiple read-only scouts, parallel static hypothesis adjudications, and sequential writable probe adjudications.
 
 A **review workspace** is the coordinator-owned disposable area belonging to one review run.
 
@@ -22,7 +22,7 @@ A **run state** is the consolidated coordinator-owned record of baseline, proven
 
 **Operational instructions** from the materialized target govern behavior. Ignored context is supplemental evidence unless supported repository configuration explicitly designates it otherwise.
 
-A **hypothesis** is an admission-qualified scout concern grounded in changed code or a changed behavior-bearing path. A **Finding** is independently established by the validator. **Disproved** rejects a hypothesis. **Unresolved** is attempted but unsettled and is not a Finding.
+A **hypothesis** is an admission-qualified scout concern grounded in changed code or a changed behavior-bearing path. A **Finding** is independently established by the validator. **Disproved** rejects a hypothesis. **Unresolved** is attempted but unsettled and is not a Finding. **Needs probe** is an internal static-adjudication transition used when a bounded writable check is required; it is never a public outcome.
 
 A **publication boundary** separates private/local context from team-visible evidence suitable for a GitHub review comment. Ignored context does not cross it automatically.
 
