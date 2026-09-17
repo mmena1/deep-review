@@ -33,6 +33,15 @@ Create a GitHub issue.
 
 Run `gh issue view <number> --comments`.
 
+## Implementation workflow
+
+- **Implementation-ready state**: an issue is implementation-ready when it is open, unblocked, unassigned, and labelled `ready-for-agent`. Absence of that label means the issue is planned or not ready.
+- **Parent/spec**: follow the direct reference in the issue's `## Parent` section, or its native parent relationship when available. Read the parent's body and comments. The ticket defines scope and acceptance criteria; the approved parent defines architecture and public seams.
+- **Open and unblocked**: fetch state, labels, assignees, and dependency data. Native `blocked_by` dependencies are canonical when available; otherwise use configured `Blocked by` references. Every blocker must be closed.
+- **Claim**: after readiness checks pass, assign the issue with `gh issue edit <n> --add-assignee @me` and remove the `ready-for-agent` label so the claimed issue leaves the frontier.
+- **Resolve**: comment with commit and verification evidence, but leave the issue open. The implementation PR or merge commit must carry `Closes #<n>` so GitHub closes it after merge. Do not close the parent spec.
+- **Frontier promotion**: after publishing tickets or resolving one, re-query every open child of the parent. Add `ready-for-agent` to each unblocked, unassigned child and remove it from blocked or assigned children, preserving parent order.
+
 ## Wayfinding operations
 
 Used by `/wayfinder`. The **map** is a single issue labelled `wayfinder:map`, holding the Notes / Decisions-so-far / Fog body. `gh issue create --label wayfinder:map`.
