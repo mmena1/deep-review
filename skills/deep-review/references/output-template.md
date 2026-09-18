@@ -22,6 +22,7 @@ Runtime: [harness identity/version] | Adapter: [reviewed commit/version]
 |---|---|---|
 | Zero hypotheses | PASS / FAIL / NOT EXERCISED | [coordinator observation] |
 | Surviving hypotheses | PASS / FAIL / NOT EXERCISED | [coordinator observation] |
+| Capacity-bounded static validation | PASS / FAIL / NOT EXERCISED | [hypothesis count, available slots, queue order, and observed completion] |
 | Multiple selected scouts | PASS / FAIL / NOT EXERCISED | [coordinator observation] |
 | Insufficient scout capacity | PASS / FAIL / NOT EXERCISED | [coordinator observation] |
 | Validator probes | PASS / FAIL / NOT EXERCISED | [coordinator observation] |
