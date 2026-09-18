@@ -44,7 +44,7 @@ Generated composed views are committed so each harness skill directory is direct
 ./install.sh --all
 ```
 
-The installer links each complete adapter as one unit. On Windows it uses directory junctions and file hardlinks, the narrow equivalents available without administrator privileges. It backs up unrelated existing destinations, replaces repository-owned or broken managed links, and never changes global concurrency settings.
+The installer links each complete adapter as one unit. On Windows it uses directory junctions and file hardlinks, the narrow equivalents available without administrator privileges. If a file hardlink cannot be created, including across volumes, it copies that native agent file and warns that the installer must be rerun after adapter updates. It backs up unrelated existing destinations, replaces repository-owned or broken managed links, and never changes global concurrency settings.
 
 Devin installs under `~/.config/devin/`. Codex installs the personal skill under `~/.agents/skills/` and custom agents under `~/.codex/agents/`, following current Codex discovery locations.
 

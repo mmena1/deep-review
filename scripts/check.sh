@@ -148,9 +148,10 @@ grep -q '^model: gpt-5-6-sol-medium$' harnesses/devin/agents/code-reviewer-struc
 grep -q '^model: gpt-5-6-luna-high$' harnesses/devin/agents/code-reviewer-validator-static/AGENT.md || fail "Devin static validator model drifted"
 grep -q '^model: gpt-5-6-luna-high$' harnesses/devin/agents/code-reviewer-validator-probe/AGENT.md || fail "Devin probe validator model drifted"
 grep -q '^  - write$' harnesses/devin/agents/code-reviewer-validator-probe/AGENT.md || fail "Devin probe validator lacks write capability"
-if grep -q '^  - \(write\|edit\)$' harnesses/devin/agents/code-reviewer-validator-static/AGENT.md; then
-  fail "Devin static validator has writable tools"
-fi
+grep -q '^  - exec$' harnesses/devin/agents/code-reviewer/AGENT.md || fail "Devin generic scout exec capability drifted"
+grep -q '^  - exec$' harnesses/devin/agents/code-reviewer-structural/AGENT.md || fail "Devin structural scout exec capability drifted"
+grep -q '^  - exec$' harnesses/devin/agents/code-reviewer-validator-static/AGENT.md || fail "Devin static validator exec capability drifted"
+grep -q 'no-write/no-probe confinement is instruction-enforced' docs/capability-matrix.md || fail "Devin instruction-enforced confinement is not documented"
 
 grep -q '^model = "gpt-5.6-luna"$' harnesses/codex/agents/deep-review-scout.toml || fail "Codex generic scout model drifted"
 grep -q '^model = "gpt-5.6-sol"$' harnesses/codex/agents/deep-review-structural.toml || fail "Codex structural scout model drifted"

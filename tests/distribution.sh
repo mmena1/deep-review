@@ -168,6 +168,38 @@ test_sync_preserves_installed_agent_link() (
   grep -q "$marker" "$installed" || fail "installed Codex agent did not receive synchronized reviewer body"
 )
 
+test_windows_file_link_falls_back_to_copy() {
+  case "$(uname -s)" in
+    MINGW*|MSYS*|CYGWIN*) ;;
+    *) return 0 ;;
+  esac
+
+  local test_home fake_bin real_cmd installed source output
+  test_home="$(new_home)"
+  fake_bin="$test_home/bin"
+  real_cmd="$(command -v cmd.exe)"
+  installed="$test_home/.codex/agents/deep-review-scout.toml"
+  source="$REPO_ROOT/harnesses/codex/agents/deep-review-scout.toml"
+  mkdir -p "$fake_bin"
+  printf '%s\n' \
+    '#!/usr/bin/env bash' \
+    'case " $* " in' \
+    '  *" //H "*) exit 1 ;;' \
+    'esac' \
+    'exec "$DR_REAL_CMD" "$@"' > "$fake_bin/cmd.exe"
+  chmod +x "$fake_bin/cmd.exe"
+
+  output="$(HOME="$test_home" PATH="$fake_bin:$PATH" DR_REAL_CMD="$real_cmd" "$REPO_ROOT/install.sh" --codex 2>&1)"
+
+  [ -f "$installed" ] || fail "Codex agent copy fallback was not created"
+  [ ! "$installed" -ef "$source" ] || fail "copy fallback unexpectedly remained a hardlink"
+  cmp -s "$installed" "$source" || fail "Codex agent copy fallback changed file contents"
+  case "$output" in
+    *"rerun the installer after adapter updates"*) ;;
+    *) fail "copy fallback did not warn about update behavior" ;;
+  esac
+}
+
 test_check_detects_generated_drift() {
   DEEP_REVIEW_SKIP_TESTS=1 "$REPO_ROOT/scripts/check.sh" >/dev/null
 
@@ -193,6 +225,7 @@ test_unrelated_destination_is_backed_up
 test_unrelated_broken_symlink_is_backed_up
 test_managed_broken_symlink_is_replaced
 test_sync_preserves_installed_agent_link
+test_windows_file_link_falls_back_to_copy
 test_check_detects_generated_drift
 
 echo "Distribution tests passed."

@@ -40,8 +40,12 @@ junction_points_into_repo() {
       $target = Join-Path $item.Parent.FullName $target
     }
     $resolved = [System.IO.Path]::GetFullPath($target)
-    $repo = [System.IO.Path]::GetFullPath($env:DR_REPO_ROOT)
-    if ($resolved.StartsWith($repo, [System.StringComparison]::OrdinalIgnoreCase)) { exit 0 }
+    $separator = [System.IO.Path]::DirectorySeparatorChar
+    $alternate = [System.IO.Path]::AltDirectorySeparatorChar
+    $repo = [System.IO.Path]::GetFullPath($env:DR_REPO_ROOT).TrimEnd($separator, $alternate)
+    $repoPrefix = $repo + $separator
+    if ($resolved.Equals($repo, [System.StringComparison]::OrdinalIgnoreCase) -or
+        $resolved.StartsWith($repoPrefix, [System.StringComparison]::OrdinalIgnoreCase)) { exit 0 }
     exit 1
   ' >/dev/null 2>&1
 }
@@ -81,11 +85,15 @@ remove_managed_link() {
 create_link() {
   local src="$1"
   local dst="$2"
+  LINK_ACTION="Linked"
   if is_windows_shell; then
     if [ -d "$src" ]; then
       cmd.exe //d //c mklink //J "$(cygpath -w "$dst")" "$(cygpath -w "$src")" >/dev/null
     else
-      cmd.exe //d //c mklink //H "$(cygpath -w "$dst")" "$(cygpath -w "$src")" >/dev/null
+      if ! cmd.exe //d //c mklink //H "$(cygpath -w "$dst")" "$(cygpath -w "$src")" >/dev/null 2>&1; then
+        cp "$src" "$dst"
+        LINK_ACTION="Copied"
+      fi
     fi
   else
     ln -s "$src" "$dst"
@@ -119,7 +127,10 @@ install_path() {
 
   mkdir -p "$(dirname "$dst")"
   create_link "$src" "$dst"
-  echo "Linked $dst -> $src"
+  echo "$LINK_ACTION $dst -> $src"
+  if [ "$LINK_ACTION" = "Copied" ]; then
+    echo "Warning: Windows hardlink creation failed; rerun the installer after adapter updates." >&2
+  fi
 }
 
 install_devin() {
