@@ -1,7 +1,7 @@
 ---
 name: code-reviewer-validator-static
 description: Independently adjudicates one hypothesis through read-only falsification
-model: gpt-5-6-luna-high
+model: gpt-5-6-sol-high
 allowed-tools:
   - read
   - grep

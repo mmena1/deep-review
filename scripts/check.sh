@@ -168,7 +168,7 @@ done
 
 grep -q '^model: gpt-5-6-luna-medium$' harnesses/devin/agents/code-reviewer/AGENT.md || fail "Devin generic scout model drifted"
 grep -q '^model: gpt-5-6-sol-medium$' harnesses/devin/agents/code-reviewer-structural/AGENT.md || fail "Devin structural scout model drifted"
-grep -q '^model: gpt-5-6-luna-high$' harnesses/devin/agents/code-reviewer-validator-static/AGENT.md || fail "Devin static validator model drifted"
+grep -q '^model: gpt-5-6-sol-high$' harnesses/devin/agents/code-reviewer-validator-static/AGENT.md || fail "Devin static validator model drifted"
 grep -q '^model: gpt-5-6-luna-high$' harnesses/devin/agents/code-reviewer-validator-probe/AGENT.md || fail "Devin probe validator model drifted"
 grep -q '^  - write$' harnesses/devin/agents/code-reviewer-validator-probe/AGENT.md || fail "Devin probe validator lacks write capability"
 grep -q '^  - exec$' harnesses/devin/agents/code-reviewer/AGENT.md || fail "Devin generic scout exec capability drifted"
@@ -178,6 +178,8 @@ grep -q 'no-write/no-probe confinement is instruction-enforced' docs/capability-
 
 grep -q '^model = "gpt-5.6-luna"$' harnesses/codex/agents/deep-review-scout.toml || fail "Codex generic scout model drifted"
 grep -q '^model = "gpt-5.6-sol"$' harnesses/codex/agents/deep-review-structural.toml || fail "Codex structural scout model drifted"
+grep -q '^model = "gpt-5.6-sol"$' harnesses/codex/agents/deep-review-validator-static.toml || fail "Codex static validator model drifted"
+grep -q '^model_reasoning_effort = "high"$' harnesses/codex/agents/deep-review-validator-static.toml || fail "Codex static validator reasoning effort drifted"
 grep -q '^sandbox_mode = "read-only"$' harnesses/codex/agents/deep-review-validator-static.toml || fail "Codex static validator must be read-only"
 grep -q '^sandbox_mode = "workspace-write"$' harnesses/codex/agents/deep-review-validator-probe.toml || fail "Codex probe validator must be writable"
 grep -q '^# Structural Lens$' harnesses/devin/agents/code-reviewer-structural/AGENT.md || fail "Devin structural profile lacks the structural lens"
