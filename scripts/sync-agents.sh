@@ -12,6 +12,10 @@ TMP_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/deep-review-sync.XXXXXX")"
 trap 'rm -rf "$TMP_ROOT"' EXIT
 STALE=0
 
+files_equal() {
+  cmp -s "$1" "$2" || diff -q --strip-trailing-cr "$1" "$2" >/dev/null 2>&1
+}
+
 replace_section() {
   local target="$1" start="$2" end="$3" body="$4"
   local expected="$TMP_ROOT/$(echo "$target" | tr '/\\' '__')"
@@ -43,7 +47,7 @@ replace_section() {
     exit 1
   }
 
-  if cmp -s "$REPO_ROOT/$target" "$expected"; then return; fi
+  if files_equal "$REPO_ROOT/$target" "$expected"; then return; fi
   if [ "$MODE" = "--check" ]; then
     echo "Stale generated reviewer body: $target" >&2
     STALE=1
