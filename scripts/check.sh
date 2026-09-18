@@ -23,9 +23,34 @@ frontmatter_has() {
   awk -v key="$key" '
     NR == 1 && $0 != "---" { invalid = 1; exit }
     NR > 1 && !closed && $0 == "---" { closed = 1; next }
-    NR > 1 && !closed && index($0, key ":") == 1 { found = 1 }
-    END { if (invalid || !closed || !found) exit 1 }
+    NR > 1 && !closed && index($0, key ":") == 1 { found++ }
+    END { if (invalid || !closed || found != 1) exit 1 }
   ' "$file" || fail "$file has invalid frontmatter or is missing $key"
+}
+
+frontmatter_parses() {
+  local file="$1"
+  awk '
+    NR == 1 && $0 != "---" { invalid = 1; exit }
+    NR > 1 && !closed && $0 == "---" { closed = 1; next }
+    NR > 1 && !closed && $0 ~ /^[a-z][a-z-]*:([[:space:]]+.+)?$/ { next }
+    NR > 1 && !closed && $0 ~ /^  ([a-z][a-z-]*:([[:space:]]+.+)?|- .+)$/ { next }
+    NR > 1 && !closed && $0 ~ /^    - .+$/ { next }
+    NR > 1 && !closed && $0 ~ /^[[:space:]]*$/ { next }
+    NR > 1 && !closed { invalid = 1 }
+    END { if (invalid || !closed) exit 1 }
+  ' "$file" || fail "$file is not valid deep-review native frontmatter"
+}
+
+yaml_subset_parses() {
+  local file="$1"
+  awk '
+    /^[[:space:]]*$/ || /^#/ { next }
+    /^[a-z][a-z_]*:([[:space:]]+.+)?$/ { next }
+    /^  [a-z][a-z_]*:([[:space:]]+.+)?$/ { next }
+    { invalid = 1 }
+    END { if (invalid) exit 1 }
+  ' "$file" || fail "$file is not valid deep-review native YAML"
 }
 
 toml_string() {
@@ -77,6 +102,7 @@ done
 for harness in devin codex; do
   skill="harnesses/$harness/skills/deep-review/SKILL.md"
   require_file "$skill"
+  frontmatter_parses "$skill"
   frontmatter_has "$skill" name
   frontmatter_has "$skill" description
   for composed in protocol.md GLOSSARY.md reviewers/SCOUT.md reviewers/validator.md references/output-template.md references/pr-review-comments.md; do
@@ -91,6 +117,7 @@ for agent in \
   code-reviewer-validator-probe; do
   file="harnesses/devin/agents/$agent/AGENT.md"
   require_file "$file"
+  frontmatter_parses "$file"
   frontmatter_has "$file" name
   frontmatter_has "$file" description
   frontmatter_has "$file" model
@@ -136,15 +163,17 @@ if grep -q '^# Structural Lens$' harnesses/devin/agents/code-reviewer/AGENT.md h
 fi
 
 require_file harnesses/codex/skills/deep-review/agents/openai.yaml
+yaml_subset_parses harnesses/codex/skills/deep-review/agents/openai.yaml
 grep -q '^policy:$' harnesses/codex/skills/deep-review/agents/openai.yaml || fail "Codex skill metadata lacks policy"
 grep -q '^  allow_implicit_invocation: false$' harnesses/codex/skills/deep-review/agents/openai.yaml || fail "Codex skill must remain explicit-only"
 
 if grep -R -n -E -i 'Devin|Codex|run_subagent|spawn_agent|gpt-[0-9]|allowed-tools|sandbox_mode|model_reasoning_effort|\.config/devin|\.codex' \
-  skills/deep-review/protocol.md skills/deep-review/reviewers; then
+  skills/deep-review; then
   fail "harness-specific metadata leaked into shared protocol/reviewer sources"
 fi
 
 for wrapper in harnesses/devin/skills/deep-review/SKILL.md harnesses/codex/skills/deep-review/SKILL.md; do
+  grep -q 'Read `protocol.md` completely' "$wrapper" || fail "$wrapper does not delegate semantics to the shared protocol"
   if grep -n -E '^## (Hypotheses|Deduplication|Validation outcomes|Pipeline invariants|Present, decide, and publish)$' "$wrapper"; then
     fail "$wrapper redefines shared protocol semantics"
   fi

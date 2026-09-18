@@ -67,6 +67,8 @@ replace_section() {
 
   awk -v start="$start" -v end="$end" -v body="$body" '
     $0 == start {
+      start_count++
+      if (start_count != 1) exit 42
       print
       while ((getline line < body) > 0) print line
       close(body)
@@ -75,6 +77,8 @@ replace_section() {
       next
     }
     replacing && $0 == end {
+      end_count++
+      if (end_count != 1) exit 42
       print
       replacing = 0
       found_end = 1
@@ -82,7 +86,7 @@ replace_section() {
     }
     !replacing { print }
     END {
-      if (!found_start || !found_end || replacing) exit 42
+      if (!found_start || !found_end || replacing || start_count != 1 || end_count != 1) exit 42
     }
   ' "$REPO_ROOT/$target" > "$expected" || {
     echo "Invalid generated-section markers in $target" >&2
