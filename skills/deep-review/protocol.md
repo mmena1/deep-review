@@ -114,6 +114,7 @@ Record only observed behavior. Never perturb a real review to exercise a row, in
 
 - zero hypotheses — whether validation was correctly skipped;
 - surviving hypotheses — whether every canonical hypothesis received independent static adjudication;
+- capacity-bounded static validation — whether hypotheses exceeding available validator slots were queued in canonical ID order, launched as slots freed, and completed without capacity alone making the run incomplete;
 - multiple selected scouts — whether the complete selected set launched in one simultaneous wave;
 - insufficient scout capacity — whether analysis stopped before any partial launch;
 - validator probes — whether the static wave completed and the exact baseline was restored and verified before each sequential probe;
