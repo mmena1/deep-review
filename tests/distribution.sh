@@ -154,11 +154,12 @@ test_unrelated_destination_is_backed_up() {
 }
 
 test_unrelated_broken_symlink_is_backed_up() {
-  local test_home destination
+  local test_home destination target
   test_home="$(new_home)"
   destination="$test_home/.agents/skills/deep-review"
+  target="${TMPDIR:-/tmp}/deep-review-unrelated-missing-$$-$RANDOM"
   mkdir -p "$(dirname "$destination")"
-  ln -s "$test_home/unrelated-missing-target" "$destination" 2>/dev/null || return 0
+  ln -s "$target" "$destination" 2>/dev/null || return 0
   [ -L "$destination" ] || return 0
 
   HOME="$test_home" "$REPO_ROOT/install.sh" --codex >/dev/null
@@ -166,7 +167,7 @@ test_unrelated_broken_symlink_is_backed_up() {
   assert_managed_root "$destination"
   local backups=("$destination".bak-*)
   [ "${#backups[@]}" -eq 1 ] || fail "expected one backup for unrelated broken symlink"
-  [ "$(readlink "${backups[0]}")" = "$test_home/unrelated-missing-target" ] || fail "broken symlink backup changed its target"
+  [ "$(readlink "${backups[0]}")" = "$target" ] || fail "broken symlink backup changed its target"
 }
 
 test_managed_broken_symlink_is_replaced() {
