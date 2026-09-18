@@ -64,7 +64,6 @@ assert_managed_root() {
 assert_codex_shape() {
   local home="$1"
   local skill="$home/.agents/skills/deep-review"
-  local installer="$home/.agents/skills/install-deep-review"
   assert_managed_root "$skill"
   assert_materialized "$skill/SKILL.md" "$REPO_ROOT/harnesses/codex/skills/deep-review/SKILL.md"
   assert_materialized "$skill/protocol.md" "$REPO_ROOT/skills/deep-review/protocol.md"
@@ -72,11 +71,6 @@ assert_codex_shape() {
   assert_materialized "$skill/references" "$REPO_ROOT/skills/deep-review/references"
   assert_materialized "$skill/reviewers" "$REPO_ROOT/skills/deep-review/reviewers"
   assert_materialized "$skill/agents" "$REPO_ROOT/harnesses/codex/skills/deep-review/agents"
-
-  assert_managed_root "$installer"
-  assert_materialized "$installer/SKILL.md" "$REPO_ROOT/harnesses/codex/skills/install-deep-review/SKILL.md"
-  assert_materialized "$installer/installation.md" "$REPO_ROOT/skills/install-deep-review/installation.md"
-  assert_materialized "$installer/agents" "$REPO_ROOT/harnesses/codex/skills/install-deep-review/agents"
 
   local agent
   for agent in deep-review-scout deep-review-structural deep-review-validator-static deep-review-validator-probe; do
@@ -87,17 +81,12 @@ assert_codex_shape() {
 assert_devin_shape() {
   local home="$1"
   local skill="$home/.config/devin/skills/deep-review"
-  local installer="$home/.config/devin/skills/install-deep-review"
   assert_managed_root "$skill"
   assert_materialized "$skill/SKILL.md" "$REPO_ROOT/harnesses/devin/skills/deep-review/SKILL.md"
   assert_materialized "$skill/protocol.md" "$REPO_ROOT/skills/deep-review/protocol.md"
   assert_materialized "$skill/GLOSSARY.md" "$REPO_ROOT/skills/deep-review/GLOSSARY.md"
   assert_materialized "$skill/references" "$REPO_ROOT/skills/deep-review/references"
   assert_materialized "$skill/reviewers" "$REPO_ROOT/skills/deep-review/reviewers"
-
-  assert_managed_root "$installer"
-  assert_materialized "$installer/SKILL.md" "$REPO_ROOT/harnesses/devin/skills/install-deep-review/SKILL.md"
-  assert_materialized "$installer/installation.md" "$REPO_ROOT/skills/install-deep-review/installation.md"
 
   local agent
   for agent in code-reviewer code-reviewer-structural code-reviewer-validator-static code-reviewer-validator-probe; do

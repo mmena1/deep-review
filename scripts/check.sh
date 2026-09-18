@@ -110,7 +110,6 @@ for file in \
   skills/deep-review/reviewers/lenses/conventions.md \
   skills/deep-review/reviewers/lenses/history.md \
   skills/deep-review/reviewers/lenses/docs.md \
-  skills/install-deep-review/installation.md \
   install.ps1 \
   docs/capability-matrix.md \
   docs/runtime-acceptance.md; do
@@ -118,13 +117,11 @@ for file in \
 done
 
 for harness in devin codex; do
-  for skill_name in deep-review install-deep-review; do
-    skill="harnesses/$harness/skills/$skill_name/SKILL.md"
-    require_file "$skill"
-    frontmatter_parses "$skill"
-    frontmatter_has "$skill" name
-    frontmatter_has "$skill" description
-  done
+  skill="harnesses/$harness/skills/deep-review/SKILL.md"
+  require_file "$skill"
+  frontmatter_parses "$skill"
+  frontmatter_has "$skill" name
+  frontmatter_has "$skill" description
 done
 
 for adapter_root in harnesses/devin/skills/deep-review harnesses/codex/skills/deep-review; do
@@ -134,16 +131,6 @@ for adapter_root in harnesses/devin/skills/deep-review harnesses/codex/skills/de
       *) fail "shared semantic copy committed under adapter: $unexpected" ;;
     esac
   done < <(find "$adapter_root" -type f | sort)
-done
-
-for adapter_root in harnesses/devin/skills/install-deep-review harnesses/codex/skills/install-deep-review; do
-  while IFS= read -r unexpected; do
-    case "$unexpected" in
-      "$adapter_root/SKILL.md"|harnesses/codex/skills/install-deep-review/agents/openai.yaml) ;;
-      *) fail "shared installation copy committed under adapter: $unexpected" ;;
-    esac
-  done < <(find "$adapter_root" -type f | sort)
-  grep -q 'Read `installation.md` completely' "$adapter_root/SKILL.md" || fail "$adapter_root/SKILL.md does not delegate to the canonical installation workflow"
 done
 
 for agent in \
@@ -203,10 +190,6 @@ require_file harnesses/codex/skills/deep-review/agents/openai.yaml
 yaml_subset_parses harnesses/codex/skills/deep-review/agents/openai.yaml
 grep -q '^policy:$' harnesses/codex/skills/deep-review/agents/openai.yaml || fail "Codex skill metadata lacks policy"
 grep -q '^  allow_implicit_invocation: false$' harnesses/codex/skills/deep-review/agents/openai.yaml || fail "Codex skill must remain explicit-only"
-require_file harnesses/codex/skills/install-deep-review/agents/openai.yaml
-yaml_subset_parses harnesses/codex/skills/install-deep-review/agents/openai.yaml
-grep -q '^  allow_implicit_invocation: false$' harnesses/codex/skills/install-deep-review/agents/openai.yaml || fail "Codex install skill must remain explicit-only"
-grep -q '^  - user$' harnesses/devin/skills/install-deep-review/SKILL.md || fail "Devin install skill must remain user-triggered"
 grep -q '^## Runtime acceptance receipt$' skills/deep-review/protocol.md || fail "shared protocol lacks runtime acceptance receipts"
 grep -q 'PASS / FAIL / NOT EXERCISED' skills/deep-review/references/output-template.md || fail "final report lacks the runtime receipt schema"
 

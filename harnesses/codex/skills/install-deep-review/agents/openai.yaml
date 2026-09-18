@@ -1,7 +1,0 @@
-interface:
-  display_name: "Install Deep Review"
-  short_description: "Install Deep Review harness adapters"
-  default_prompt: "Use $install-deep-review to install Deep Review for detected harnesses."
-
-policy:
-  allow_implicit_invocation: false

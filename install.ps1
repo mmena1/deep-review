@@ -146,20 +146,9 @@ function Install-DeepReviewSkill {
     if ($Harness -eq 'codex') { Install-Path (Join-Path $wrapper 'agents') (Join-Path $Destination 'agents') -ManagedParent }
 }
 
-function Install-InstallerSkill {
-    param([string]$Harness, [string]$Destination)
-    $wrapper = Join-Path $RepoRoot "harnesses/$Harness/skills/install-deep-review"
-    $shared = Join-Path $RepoRoot 'skills/install-deep-review'
-    Initialize-SkillRoot $Destination
-    Install-Path (Join-Path $wrapper 'SKILL.md') (Join-Path $Destination 'SKILL.md') -ManagedParent
-    Install-Path (Join-Path $shared 'installation.md') (Join-Path $Destination 'installation.md') -ManagedParent
-    if ($Harness -eq 'codex') { Install-Path (Join-Path $wrapper 'agents') (Join-Path $Destination 'agents') -ManagedParent }
-}
-
 function Install-DevinAdapter {
     $root = Join-Path $HomePath '.config/devin'
     Install-DeepReviewSkill 'devin' (Join-Path $root 'skills/deep-review')
-    Install-InstallerSkill 'devin' (Join-Path $root 'skills/install-deep-review')
     foreach ($agent in @('code-reviewer', 'code-reviewer-structural', 'code-reviewer-validator-static', 'code-reviewer-validator-probe')) {
         Install-Path (Join-Path $RepoRoot "harnesses/devin/agents/$agent") (Join-Path $root "agents/$agent")
     }
@@ -168,7 +157,6 @@ function Install-DevinAdapter {
 
 function Install-CodexAdapter {
     Install-DeepReviewSkill 'codex' (Join-Path $HomePath '.agents/skills/deep-review')
-    Install-InstallerSkill 'codex' (Join-Path $HomePath '.agents/skills/install-deep-review')
     foreach ($agent in @('deep-review-scout', 'deep-review-structural', 'deep-review-validator-static', 'deep-review-validator-probe')) {
         Install-Path (Join-Path $RepoRoot "harnesses/codex/agents/$agent.toml") (Join-Path $HomePath ".codex/agents/$agent.toml")
     }

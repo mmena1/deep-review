@@ -3,7 +3,6 @@
 ## Repository layout
 
 - `skills/deep-review/` — canonical harness-neutral protocol, reviewer contracts, lenses, glossary, and references.
-- `skills/install-deep-review/` — canonical explicit installation workflow.
 - `harnesses/devin/` — Devin wrappers, native metadata, and reviewer agents.
 - `harnesses/codex/` — Codex wrappers, native metadata, and custom reviewer agents.
 - `scripts/` — generated-body synchronization and the canonical distribution check.

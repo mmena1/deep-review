@@ -5,7 +5,6 @@ This matrix records adapter mechanisms. The shared semantics remain in `skills/d
 | Capability | Devin adapter | Codex adapter |
 | --- | --- | --- |
 | Skill location | `~/.config/devin/skills/deep-review` | `~/.agents/skills/deep-review` |
-| Explicit installer skill | `~/.config/devin/skills/install-deep-review`; user-triggered | `~/.agents/skills/install-deep-review`; implicit invocation disabled |
 | Installed skill composition | Native wrapper plus linked canonical files/directories | Native wrapper and metadata plus linked canonical files/directories |
 | Native agent location | `~/.config/devin/agents/` | `~/.codex/agents/*.toml` |
 | Coordinator model | Devin skill frontmatter pins the existing Sol medium assignment | Parent Codex session; the adapter does not override the user's coordinator model |

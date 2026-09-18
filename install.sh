@@ -205,20 +205,9 @@ compose_deep_review_skill() {
   if [ "$harness" = "codex" ]; then install_path "$wrapper/agents" "$dst/agents" 1; fi
 }
 
-compose_install_skill() {
-  local harness="$1" dst="$2"
-  local wrapper="$REPO_ROOT/harnesses/$harness/skills/install-deep-review"
-  local shared="$REPO_ROOT/skills/install-deep-review"
-  prepare_skill_root "$dst"
-  install_path "$wrapper/SKILL.md" "$dst/SKILL.md" 1
-  install_path "$shared/installation.md" "$dst/installation.md" 1
-  if [ "$harness" = "codex" ]; then install_path "$wrapper/agents" "$dst/agents" 1; fi
-}
-
 install_devin() {
   local root="${HOME}/.config/devin" agent
   compose_deep_review_skill devin "$root/skills/deep-review"
-  compose_install_skill devin "$root/skills/install-deep-review"
   for agent in code-reviewer code-reviewer-structural code-reviewer-validator-static code-reviewer-validator-probe; do
     install_path "$REPO_ROOT/harnesses/devin/agents/$agent" "$root/agents/$agent"
   done
@@ -228,7 +217,6 @@ install_devin() {
 install_codex() {
   local agent
   compose_deep_review_skill codex "${HOME}/.agents/skills/deep-review"
-  compose_install_skill codex "${HOME}/.agents/skills/install-deep-review"
   for agent in deep-review-scout deep-review-structural deep-review-validator-static deep-review-validator-probe; do
     install_path "$REPO_ROOT/harnesses/codex/agents/$agent.toml" "${HOME}/.codex/agents/$agent.toml"
   done

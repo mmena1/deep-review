@@ -20,7 +20,6 @@ The canonical semantics live in `skills/deep-review/protocol.md`. Shared scout a
 
 ```text
 skills/deep-review/              canonical protocol and reviewer sources
-skills/install-deep-review/      canonical installation workflow
 harnesses/devin/                 Devin wrappers, metadata, and native agents
 harnesses/codex/                 Codex wrappers, metadata, and native agents
 install.sh / install.ps1         compose personal installations from those sources
@@ -46,7 +45,7 @@ Shared protocol, glossary, references, and reviewer contracts are committed only
 ./install.sh --all
 ```
 
-From native Windows PowerShell, use `./install.ps1` with `-Devin`, `-Codex`, or `-All`. After installing once, explicitly invoke `/install-deep-review` to refresh or install another supported harness through the appropriate native installer.
+From native Windows PowerShell, use `./install.ps1` with `-Devin`, `-Codex`, or `-All`. After pulling repository updates, rerun the relevant native installer to refresh the installed adapter.
 
 The installer creates a small managed skill root and materializes canonical directories, canonical files, and native wrapper metadata into it. Unix uses symbolic links. Windows uses directory junctions and file hardlinks, the narrow equivalents available without administrator privileges. If link creation fails, including across volumes, it copies the affected path and warns that the installer must be rerun after repository updates. It backs up unrelated existing destinations, replaces repository-owned or broken managed links, and never changes global concurrency settings.
 
