@@ -85,6 +85,18 @@ require_command git
 require_command gh
 
 for file in \
+  install.sh \
+  install.ps1 \
+  scripts/check.sh \
+  scripts/sync-agents.sh \
+  tests/distribution.sh \
+  skills/deep-review/protocol.md \
+  harnesses/codex/agents/deep-review-scout.toml \
+  harnesses/codex/skills/deep-review/agents/openai.yaml; do
+  [ "$(git check-attr eol -- "$file")" = "$file: eol: lf" ] || fail "$file is not pinned to LF in .gitattributes"
+done
+
+for file in \
   skills/deep-review/protocol.md \
   skills/deep-review/GLOSSARY.md \
   skills/deep-review/reviewers/SCOUT.md \
