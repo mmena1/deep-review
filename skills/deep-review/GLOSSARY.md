@@ -14,6 +14,6 @@
 - **discuss** — An Unresolved item or a Finding needing author context or a tradeoff decision.
 - **follow-up** — A Finding that is real but too large or out of scope for the current change.
 
-The protocol is defined in `references/review-protocol.md` and follows:
+The protocol is defined in `protocol.md` and follows:
 
 `hypothesis → static adjudication → finding | disproved | unresolved | needs probe → writable probe → finding | disproved | unresolved`
