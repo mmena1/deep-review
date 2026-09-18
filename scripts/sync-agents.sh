@@ -97,7 +97,7 @@ replace_section() {
     echo "Stale generated reviewer body: $target" >&2
     STALE=1
   else
-    mv "$expected" "$REPO_ROOT/$target"
+    cp "$expected" "$REPO_ROOT/$target"
     echo "Synchronized $target"
   fi
 }

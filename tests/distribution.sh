@@ -143,6 +143,31 @@ test_managed_broken_symlink_is_replaced() {
   [ ! -e "${backups[0]}" ] || fail "managed broken symlink should not be backed up"
 }
 
+test_sync_preserves_installed_agent_link() (
+  local test_home source backup installed marker
+  test_home="$(new_home)"
+  source="$REPO_ROOT/skills/deep-review/reviewers/SCOUT.md"
+  backup="$(mktemp "${TMPDIR:-/tmp}/deep-review-scout.XXXXXX")"
+  installed="$test_home/.codex/agents/deep-review-scout.toml"
+  marker="sync-preserves-installed-agent-link"
+
+  cp "$source" "$backup"
+  trap '
+    cp "$backup" "$source"
+    "$REPO_ROOT/scripts/sync-agents.sh" >/dev/null
+    rm -f "$backup"
+  ' EXIT
+
+  HOME="$test_home" "$REPO_ROOT/install.sh" --codex >/dev/null
+  printf '\n<!-- %s -->\n' "$marker" >> "$source"
+  "$REPO_ROOT/scripts/sync-agents.sh" >/dev/null
+
+  assert_link_target \
+    "$installed" \
+    "$REPO_ROOT/harnesses/codex/agents/deep-review-scout.toml"
+  grep -q "$marker" "$installed" || fail "installed Codex agent did not receive synchronized reviewer body"
+)
+
 test_check_detects_generated_drift() {
   DEEP_REVIEW_SKIP_TESTS=1 "$REPO_ROOT/scripts/check.sh" >/dev/null
 
@@ -167,6 +192,7 @@ test_bare_install_detects_supported_harnesses
 test_unrelated_destination_is_backed_up
 test_unrelated_broken_symlink_is_backed_up
 test_managed_broken_symlink_is_replaced
+test_sync_preserves_installed_agent_link
 test_check_detects_generated_drift
 
 echo "Distribution tests passed."
