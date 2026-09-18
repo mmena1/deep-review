@@ -2,32 +2,163 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
-CONFIG_DIR="${HOME}/.config/devin"
+MODE="${1:-detected}"
+STAMP="$(date +%Y%m%d-%H%M%S)"
 
-install_dir() {
+usage() {
+  cat <<'EOF'
+Usage: ./install.sh [--devin | --codex | --all]
+
+With no option, install into every detected supported harness.
+EOF
+}
+
+case "$MODE" in
+  detected|--devin|--codex|--all) ;;
+  -h|--help) usage; exit 0 ;;
+  *) usage >&2; exit 2 ;;
+esac
+
+is_windows_shell() {
+  case "$(uname -s)" in
+    MINGW*|MSYS*|CYGWIN*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+junction_points_into_repo() {
+  local dst="$1"
+  local win_dst win_repo
+  is_windows_shell || return 1
+  win_dst="$(cygpath -w "$dst")"
+  win_repo="$(cygpath -w "$REPO_ROOT")"
+  DR_LINK_PATH="$win_dst" DR_REPO_ROOT="$win_repo" powershell.exe -NoProfile -Command '
+    $item = Get-Item -LiteralPath $env:DR_LINK_PATH -Force -ErrorAction Stop
+    if (-not $item.LinkType -or -not $item.Target) { exit 1 }
+    $target = [string]$item.Target
+    if (-not [System.IO.Path]::IsPathRooted($target)) {
+      $target = Join-Path $item.Parent.FullName $target
+    }
+    $resolved = [System.IO.Path]::GetFullPath($target)
+    $repo = [System.IO.Path]::GetFullPath($env:DR_REPO_ROOT)
+    if ($resolved.StartsWith($repo, [System.StringComparison]::OrdinalIgnoreCase)) { exit 0 }
+    exit 1
+  ' >/dev/null 2>&1
+}
+
+symlink_points_into_repo() {
+  local dst="$1"
+  local target candidate resolved
+  target="$(readlink "$dst")" || return 1
+  case "$target" in
+    /*) candidate="$target" ;;
+    *) candidate="$(dirname "$dst")/$target" ;;
+  esac
+
+  if command -v realpath >/dev/null 2>&1; then
+    resolved="$(realpath -m -- "$candidate")"
+  elif [ -e "$candidate" ]; then
+    resolved="$(cd "$(dirname "$candidate")" && pwd -P)/$(basename "$candidate")"
+  else
+    return 1
+  fi
+
+  case "$resolved" in
+    "$REPO_ROOT"|"$REPO_ROOT"/*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+remove_managed_link() {
+  local dst="$1"
+  if is_windows_shell && [ -d "$dst" ] && junction_points_into_repo "$dst"; then
+    cmd.exe //d //c rmdir "$(cygpath -w "$dst")" >/dev/null
+  else
+    rm -f "$dst"
+  fi
+}
+
+create_link() {
   local src="$1"
   local dst="$2"
-  local backup_name
+  if is_windows_shell; then
+    if [ -d "$src" ]; then
+      cmd.exe //d //c mklink //J "$(cygpath -w "$dst")" "$(cygpath -w "$src")" >/dev/null
+    else
+      cmd.exe //d //c mklink //H "$(cygpath -w "$dst")" "$(cygpath -w "$src")" >/dev/null
+    fi
+  else
+    ln -s "$src" "$dst"
+  fi
+}
+
+install_path() {
+  local src="$1"
+  local dst="$2"
+  local backup
 
   if [ -L "$dst" ]; then
-    echo "Removing existing symlink at $dst"
-    rm "$dst"
+    if symlink_points_into_repo "$dst"; then
+      echo "Replacing repository symlink at $dst"
+      remove_managed_link "$dst"
+    else
+      backup="${dst}.bak-${STAMP}"
+      echo "Backing up unrelated symlink $dst to $backup"
+      mv "$dst" "$backup"
+    fi
   elif [ -e "$dst" ]; then
-    backup_name="${dst}.bak-$(date +%Y%m%d-%H%M%S)"
-    echo "Backing up existing $dst to $backup_name"
-    mv "$dst" "$backup_name"
+    if [ "$dst" -ef "$src" ] || junction_points_into_repo "$dst"; then
+      echo "Replacing repository link at $dst"
+      remove_managed_link "$dst"
+    else
+      backup="${dst}.bak-${STAMP}"
+      echo "Backing up existing $dst to $backup"
+      mv "$dst" "$backup"
+    fi
   fi
 
   mkdir -p "$(dirname "$dst")"
-  ln -s "$src" "$dst"
+  create_link "$src" "$dst"
   echo "Linked $dst -> $src"
 }
 
-install_dir "$REPO_ROOT/skills/deep-review" "$CONFIG_DIR/skills/deep-review"
+install_devin() {
+  local root="${HOME}/.config/devin"
+  local agent
+  install_path "$REPO_ROOT/harnesses/devin/skills/deep-review" "$root/skills/deep-review"
+  for agent in code-reviewer code-reviewer-structural code-reviewer-validator-static code-reviewer-validator-probe; do
+    install_path "$REPO_ROOT/harnesses/devin/agents/$agent" "$root/agents/$agent"
+  done
+  echo "Devin adapter installed. Verify with: devin skills list"
+}
 
-for agent in code-reviewer code-reviewer-structural code-reviewer-validator; do
-  install_dir "$REPO_ROOT/agents/$agent" "$CONFIG_DIR/agents/$agent"
-done
+install_codex() {
+  local agent
+  install_path "$REPO_ROOT/harnesses/codex/skills/deep-review" "${HOME}/.agents/skills/deep-review"
+  for agent in deep-review-scout deep-review-structural deep-review-validator-static deep-review-validator-probe; do
+    install_path "$REPO_ROOT/harnesses/codex/agents/$agent.toml" "${HOME}/.codex/agents/$agent.toml"
+  done
+  echo "Codex adapter installed. Restart Codex if the skill or custom agents do not appear."
+}
 
-echo "Install complete."
-echo "Verify with: devin skills list"
+INSTALL_DEVIN=0
+INSTALL_CODEX=0
+
+case "$MODE" in
+  --devin) INSTALL_DEVIN=1 ;;
+  --codex) INSTALL_CODEX=1 ;;
+  --all) INSTALL_DEVIN=1; INSTALL_CODEX=1 ;;
+  detected)
+    if command -v devin >/dev/null 2>&1 || [ -d "${HOME}/.config/devin" ]; then INSTALL_DEVIN=1; fi
+    if command -v codex >/dev/null 2>&1 || [ -d "${HOME}/.codex" ] || [ -d "${HOME}/.agents" ]; then INSTALL_CODEX=1; fi
+    if [ "$INSTALL_DEVIN" -eq 0 ] && [ "$INSTALL_CODEX" -eq 0 ]; then
+      echo "No supported harness detected. Use --devin, --codex, or --all." >&2
+      exit 1
+    fi
+    ;;
+esac
+
+if [ "$INSTALL_DEVIN" -eq 1 ]; then install_devin; fi
+if [ "$INSTALL_CODEX" -eq 1 ]; then install_codex; fi
+
+echo "Install complete. Global concurrency settings were not changed."

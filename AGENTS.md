@@ -2,15 +2,20 @@
 
 ## Repository layout
 
-- `skills/deep-review/` — the `/deep-review` skill. Symlinked to `~/.config/devin/skills/deep-review`.
-- `agents/` — custom subagent profiles. Symlinked to `~/.config/devin/agents/`.
+- `skills/deep-review/` — canonical harness-neutral protocol, reviewer contracts, lenses, glossary, and references.
+- `harnesses/devin/` — complete Devin skill and native agent adapter.
+- `harnesses/codex/` — complete Codex skill and native custom-agent adapter.
+- `scripts/` — generated-body synchronization and the canonical distribution check.
 
 ## Working in this repo
 
-- Edit skill and agent files in this repo. They are also reachable through the symlinks in `~/.config/devin/`.
+- Edit shared semantics only under `skills/deep-review/`; edit native metadata and orchestration only under the corresponding `harnesses/` adapter.
+- After shared reviewer or composed-skill changes, run `./scripts/sync-agents.sh` and commit the generated adapter artifacts.
+- Run `./scripts/check.sh` before commit. It is the same command CI uses.
 - After changes, verify Devin still loads the skill and agents:
   - `devin skills list`
   - `devin -p "List the available subagent profiles"`
+- Verify Codex discovers the installed skill and custom agents with a fresh session and the runtime matrix in `docs/runtime-acceptance.md`.
 - Commit changes with concise, descriptive summaries. Do not add generated-by boilerplate.
 - Keep references in `skills/deep-review/references/` up to date.
 
