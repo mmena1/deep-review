@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(cd "$(dirname "$0")" && pwd -P)"
 MODE="${1:-detected}"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 MANAGED_MARKER=".deep-review-managed"
@@ -27,16 +27,41 @@ is_windows_shell() {
   esac
 }
 
+normalize_absolute_path() {
+  local path="$1" part normalized=""
+  local -a parts
+  IFS='/' read -r -a parts <<< "$path"
+  for part in "${parts[@]}"; do
+    case "$part" in
+      ''|.) ;;
+      ..)
+        normalized="${normalized%/*}"
+        ;;
+      *) normalized="$normalized/$part" ;;
+    esac
+  done
+  printf '%s\n' "${normalized:-/}"
+}
+
+canonicalize_path() {
+  local candidate="$1" probe parent suffix="" base
+  case "$candidate" in
+    /*) probe="$candidate" ;;
+    *) probe="$PWD/$candidate" ;;
+  esac
+  while [ ! -d "$probe" ]; do
+    parent="$(dirname "$probe")"
+    [ "$parent" != "$probe" ] || return 1
+    suffix="/$(basename "$probe")$suffix"
+    probe="$parent"
+  done
+  base="$(cd "$probe" && pwd -P)" || return 1
+  normalize_absolute_path "$base$suffix"
+}
+
 path_is_within_repo() {
-  local candidate="$1"
-  local resolved
-  if command -v realpath >/dev/null 2>&1; then
-    resolved="$(realpath -m -- "$candidate")"
-  elif [ -e "$candidate" ]; then
-    resolved="$(cd "$(dirname "$candidate")" && pwd -P)/$(basename "$candidate")"
-  else
-    return 1
-  fi
+  local candidate="$1" resolved
+  resolved="$(canonicalize_path "$candidate")" || return 1
   case "$resolved" in
     "$REPO_ROOT"|"$REPO_ROOT"/*) return 0 ;;
     *) return 1 ;;

@@ -54,6 +54,6 @@ Devin installs under `~/.config/devin/`. Codex installs the personal skill under
 
 ## Verification
 
-`./scripts/check.sh` verifies canonical sources, the absence of committed semantic copies in adapters, install-time composition, generated reviewer sections, native metadata structure, required `git` and `gh` commands, harness-neutral shared content, adapter-role mappings, and installer behavior. CI invokes the same command on Linux and Windows.
+`./scripts/check.sh` verifies canonical sources, the absence of committed semantic copies in adapters, install-time composition, generated reviewer sections, native metadata structure, required `git` and `gh` commands, harness-neutral shared content, adapter-role mappings, and installer behavior. CI invokes the same command on Linux, macOS, and Windows.
 
 Static checks cannot prove multi-agent orchestration. Every real review emits a passive runtime-acceptance receipt; use the targeted scenarios in `docs/runtime-acceptance.md` for important paths that normal reviews do not exercise.

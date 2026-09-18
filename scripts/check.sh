@@ -84,6 +84,10 @@ toml_parses() {
 require_command git
 require_command gh
 
+if grep -q 'realpath -m' install.sh; then fail "install.sh uses GNU-only realpath -m"; fi
+if grep -q 'sed -i' tests/distribution.sh; then fail "distribution tests use non-portable sed -i"; fi
+if grep -q -- '--strip-trailing-cr' scripts/sync-agents.sh; then fail "sync uses GNU-only diff options"; fi
+
 for file in \
   install.sh \
   install.ps1 \

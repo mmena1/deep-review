@@ -260,7 +260,12 @@ test_check_detects_generated_drift() (
   backup="$(mktemp "$TEST_ROOT/deep-review-agent.XXXXXX")"
   cp "$agent" "$backup"
   trap 'cp "$backup" "$agent"; rm -f "$backup"' EXIT
-  sed -i '0,/# Scout Contract/s//# Drifted Scout Contract/' "$agent"
+  awk '
+    !changed && $0 == "# Scout Contract" { print "# Drifted Scout Contract"; changed = 1; next }
+    { print }
+    END { if (!changed) exit 1 }
+  ' "$agent" > "$TEST_ROOT/drifted-agent.toml"
+  cp "$TEST_ROOT/drifted-agent.toml" "$agent"
   if DEEP_REVIEW_SKIP_TESTS=1 "$REPO_ROOT/scripts/check.sh" >/dev/null 2>&1; then
     fail "check.sh accepted stale generated agent content"
   fi
