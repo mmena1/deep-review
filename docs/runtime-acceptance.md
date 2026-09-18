@@ -10,7 +10,8 @@ Static checks cannot prove multi-agent orchestration. Every real review therefor
 | Insufficient scout capacity | Review stops before launching any scout and reports required versus available capacity | Same |
 | Validator uses probes | Static wave completes first; baseline is verified, then restored before every sequential writable probe | Same |
 | One scout fails | Running scouts may finish; run becomes incomplete and cannot publish or claim PASS/`No findings` | Same |
-| Validator fails partway | Completed outcomes remain; unattempted hypotheses are not validated due to review failure; run is incomplete | Same |
+| Validator fails partway | Completed outcomes remain; queued hypotheses continue in canonical order until each is attempted once; run is incomplete and the writable phase is blocked | Same |
+| Capacity-bounded static validation | When hypotheses exceed available validator slots, queued hypotheses launch as slots free, every hypothesis is attempted once, and capacity alone does not make the run incomplete | Same |
 | PR head changes | Reviewed and current SHAs are reported; result is stale and publication is blocked | Same |
 | Cleanup | Only the current run's worktree, context snapshot, and run directory are removed | Same |
 
