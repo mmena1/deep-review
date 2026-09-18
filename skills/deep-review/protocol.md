@@ -87,14 +87,14 @@ The coordinator merges hypotheses only when they describe the same behavioral fa
 
 ## Validation outcomes
 
-The validator follows `reviewers/validator.md` and receives exactly one canonical hypothesis per invocation. Every hypothesis enters a concurrent static adjudication wave against the same pinned worktree under a read-only contract. A static invocation returns exactly one of:
+The validator follows `reviewers/validator.md` and receives exactly one canonical hypothesis per invocation. Every hypothesis enters one logical concurrent static adjudication phase against the same pinned worktree under a read-only contract. The coordinator queues hypotheses in canonical ID order (`H1`, `H2`, …), fills the maximum safe validator capacity exposed by the harness, and launches the next queued hypothesis whenever an invocation finishes and frees a slot, including after failure or timeout. Capacity-constrained batching, including sequential execution with one slot, is valid and does not make the review incomplete. Completion order may be arbitrary, and static invocations remain independent: no invocation depends on or consumes another validator's outcome. A static invocation returns exactly one of:
 
 - **Finding** — decisive static evidence independently establishes the hypothesis, including final severity and evidence of actual reachability and impact.
 - **Disproved** — concrete static evidence such as an invariant, guard, contract, or test rejects the hypothesis. It is not user-visible.
 - **Unresolved** — static adjudication cannot establish or reject the hypothesis and no meaningful writable check can settle it. It maps to `discuss`.
 - **Needs probe** — static evidence cannot settle the hypothesis, but a bounded writable check can materially answer a specific unresolved factual question. It must include the unresolved question, why static evidence is insufficient, and the cheapest decisive check. This is an internal transition only.
 
-After the complete static wave, the coordinator queues only `Needs probe` hypotheses for sequential writable validation, ordered by canonical hypothesis ID. Each writable invocation receives exactly one canonical hypothesis plus its unresolved question and proposed check, independently adjudicates the full hypothesis, and returns exactly one final `Finding`, `Disproved`, or `Unresolved` outcome.
+Only after every canonical hypothesis has been attempted and all static invocations have finished may the coordinator enter the writable phase. If the static phase remains complete, it queues `Needs probe` hypotheses for sequential writable validation, ordered by canonical hypothesis ID rather than static completion order. Each writable invocation receives exactly one canonical hypothesis plus its unresolved question and proposed check, independently adjudicates the full hypothesis, and returns exactly one final `Finding`, `Disproved`, or `Unresolved` outcome.
 
 Static validators may read/search repository files and use read-only Git inspection. They must not run builds, tests, linters, typecheckers, scripts, probes, package-manager commands, or other commands that can create filesystem artifacts. Writable probes use the existing exact-baseline restoration and contamination protections.
 
@@ -118,7 +118,7 @@ Record only observed behavior. Never perturb a real review to exercise a row, in
 - insufficient scout capacity — whether analysis stopped before any partial launch;
 - validator probes — whether the static wave completed and the exact baseline was restored and verified before each sequential probe;
 - scout failure — whether running scouts finished, the run became incomplete, and publication/PASS were blocked;
-- validator partial failure — whether completed outcomes survived and remaining hypotheses were marked not validated due to review failure;
+- validator partial failure — whether completed outcomes survived, queued static hypotheses were still attempted, and writable probing was blocked;
 - PR head change — whether stale reviewed/current SHAs were reported and publication was blocked;
 - cleanup — whether removal was confined to the current run and exact leftovers were reported.
 
@@ -126,12 +126,12 @@ Rare failure and transition paths remain `NOT EXERCISED` until they occur natura
 
 ## Pipeline invariants
 
-- All selected scouts inspect one pinned coordinator-owned worktree concurrently and read-only. Static validators later inspect that same disposable worktree concurrently under a read-only contract; writable probes receive access sequentially.
-- Every deduplicated hypothesis enters the static adjudication wave, and no validator runs when successful scouting produces zero hypotheses.
+- All selected scouts inspect one pinned coordinator-owned worktree concurrently and read-only. Static validators later inspect that same disposable worktree with capacity-bounded concurrency under a read-only contract; writable probes receive access sequentially.
+- Every deduplicated hypothesis enters the static adjudication queue exactly once in canonical ID order, and no validator runs when successful scouting produces zero hypotheses. The coordinator keeps the maximum safe harness capacity occupied until the queue is drained, refilling a slot whenever an invocation finishes regardless of outcome; one available slot is sufficient for a valid static phase, and capacity limits alone never make a run incomplete.
 - Exactly one late-bound `reviewers/validator-manifest` is created when hypotheses survive; it is derived from those hypotheses and reused for all static and writable invocations.
-- The coordinator waits for the complete static wave, then verifies the shared worktree is still at the exact recorded pinned baseline before starting writable probes. Any unexpected contamination or baseline mismatch at this boundary marks the review incomplete and prevents writable probing.
+- The coordinator waits for the static queue to drain and all active invocations to finish, then verifies the shared worktree is still at the exact recorded pinned baseline. Any static validator failure/timeout, unexpected contamination, or baseline mismatch marks the review incomplete and prevents the entire writable phase.
 - Only completed `Needs probe` outcomes enter the writable queue, ordered by canonical hypothesis ID. Before every writable probe, including the first, the coordinator restores, cleans, and verifies the exact recorded pinned baseline.
-- Static validators never execute artifact-producing commands. A static-wave failure preserves completed outcomes, marks the review incomplete, and prevents writable probing for hypotheses without successful static adjudication.
+- Static validators never execute artifact-producing commands. A static validator failure or timeout preserves completed outcomes and marks the review incomplete, but the coordinator continues launching queued static hypotheses until each has been attempted exactly once.
 - Once each context artifact passes validation, it is copied exactly once with the fixed direct `cp` operation or selected harness equivalent; manifests reference the existing snapshot entry, and the model does not reconstruct artifact contents or generate capture machinery during a run.
 - Coordinator-owned protocol state is consolidated in one run state, including the exact publication payload when applicable, with final-report and publication-receipt artifacts created only under the conditions above.
 - Every final report and run state contains the passive runtime acceptance receipt with no inferred passes.

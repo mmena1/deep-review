@@ -11,7 +11,7 @@ The shared pipeline is:
 3. Select review lenses and verify enough runtime capacity to launch the complete scout set simultaneously.
 4. Run every selected scout read-only against the same pinned worktree.
 5. Deduplicate admission-qualified Hypotheses.
-6. Adjudicate every surviving hypothesis independently through a concurrent read-only static wave, followed by sequential writable probes only when required.
+6. Adjudicate every surviving hypothesis independently through a capacity-bounded read-only static phase, followed by sequential writable probes only when required.
 7. Report Findings, Disproved hypotheses, and Unresolved questions with consistent failure, freshness, publication, and cleanup semantics.
 
 The canonical semantics live in `skills/deep-review/protocol.md`. Shared scout and validator contracts live in `skills/deep-review/reviewers/`; harness wrappers contain only native orchestration and metadata.
