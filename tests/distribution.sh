@@ -3,76 +3,125 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 ORIGINAL_PATH="$PATH"
+TEST_ROOT="$(mktemp -d "$REPO_ROOT/.distribution-test.XXXXXX")"
+trap 'rm -rf "$TEST_ROOT"' EXIT
 
 fail() {
   echo "FAIL: $*" >&2
   exit 1
 }
 
-assert_link_target() {
+is_windows_shell() {
+  case "$(uname -s)" in
+    MINGW*|MSYS*|CYGWIN*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+assert_materialized() {
   local path="$1"
   local expected="$2"
+  [ -e "$path" ] || [ -L "$path" ] || fail "missing installed path: $path"
+
   if [ -L "$path" ]; then
     [ "$(readlink "$path")" = "$expected" ] || fail "$path points to $(readlink "$path"), expected $expected"
     return
   fi
-  if [ -f "$path" ] && [ "$path" -ef "$expected" ]; then
-    return
+  if [ -f "$path" ]; then
+    if [ "$path" -ef "$expected" ] || cmp -s "$path" "$expected"; then return; fi
+    fail "$path neither links to nor matches $expected"
   fi
-  case "$(uname -s)" in
-    MINGW*|MSYS*|CYGWIN*)
-      local win_path win_expected
-      win_path="$(cygpath -w "$path")"
-      win_expected="$(cygpath -w "$expected")"
-      DR_LINK_PATH="$win_path" DR_EXPECTED_TARGET="$win_expected" powershell.exe -NoProfile -Command '
-        $item = Get-Item -LiteralPath $env:DR_LINK_PATH -Force -ErrorAction Stop
-        if (-not $item.Target) { exit 1 }
-        $resolved = [System.IO.Path]::GetFullPath([string]$item.Target)
-        $expected = [System.IO.Path]::GetFullPath($env:DR_EXPECTED_TARGET)
-        if ($resolved -eq $expected) { exit 0 }
-        exit 1
-      ' >/dev/null 2>&1 || fail "$path is not linked to $expected"
+  if is_windows_shell; then
+    local win_path win_expected
+    win_path="$(cygpath -w "$path")"
+    win_expected="$(cygpath -w "$expected")"
+    if DR_LINK_PATH="$win_path" DR_EXPECTED_TARGET="$win_expected" powershell.exe -NoProfile -Command '
+      $item = Get-Item -LiteralPath $env:DR_LINK_PATH -Force -ErrorAction Stop
+      if (-not $item.Target) { exit 1 }
+      $resolved = [System.IO.Path]::GetFullPath([string]$item.Target)
+      $expected = [System.IO.Path]::GetFullPath($env:DR_EXPECTED_TARGET)
+      if ($resolved.Equals($expected, [System.StringComparison]::OrdinalIgnoreCase)) { exit 0 }
+      exit 1
+    ' >/dev/null 2>&1; then
       return
-      ;;
-  esac
-  fail "$path is not linked to $expected"
+    fi
+  fi
+  if [ -d "$path" ] && diff -qr "$path" "$expected" >/dev/null; then return; fi
+  fail "$path neither links to nor matches $expected"
+}
+
+assert_managed_root() {
+  local path="$1"
+  local marker
+  [ -d "$path" ] || fail "missing managed skill root: $path"
+  [ -f "$path/.deep-review-managed" ] || fail "$path lacks its managed marker"
+  marker="$(cat "$path/.deep-review-managed")"
+  if [ "$marker" = "$REPO_ROOT" ]; then return; fi
+  if is_windows_shell && [ "$(cygpath -u "$marker")" = "$REPO_ROOT" ]; then return; fi
+  fail "$path has the wrong managed marker"
+}
+
+assert_codex_shape() {
+  local home="$1"
+  local skill="$home/.agents/skills/deep-review"
+  local installer="$home/.agents/skills/install-deep-review"
+  assert_managed_root "$skill"
+  assert_materialized "$skill/SKILL.md" "$REPO_ROOT/harnesses/codex/skills/deep-review/SKILL.md"
+  assert_materialized "$skill/protocol.md" "$REPO_ROOT/skills/deep-review/protocol.md"
+  assert_materialized "$skill/GLOSSARY.md" "$REPO_ROOT/skills/deep-review/GLOSSARY.md"
+  assert_materialized "$skill/references" "$REPO_ROOT/skills/deep-review/references"
+  assert_materialized "$skill/reviewers" "$REPO_ROOT/skills/deep-review/reviewers"
+  assert_materialized "$skill/agents" "$REPO_ROOT/harnesses/codex/skills/deep-review/agents"
+
+  assert_managed_root "$installer"
+  assert_materialized "$installer/SKILL.md" "$REPO_ROOT/harnesses/codex/skills/install-deep-review/SKILL.md"
+  assert_materialized "$installer/installation.md" "$REPO_ROOT/skills/install-deep-review/installation.md"
+  assert_materialized "$installer/agents" "$REPO_ROOT/harnesses/codex/skills/install-deep-review/agents"
+
+  local agent
+  for agent in deep-review-scout deep-review-structural deep-review-validator-static deep-review-validator-probe; do
+    assert_materialized "$home/.codex/agents/$agent.toml" "$REPO_ROOT/harnesses/codex/agents/$agent.toml"
+  done
+}
+
+assert_devin_shape() {
+  local home="$1"
+  local skill="$home/.config/devin/skills/deep-review"
+  local installer="$home/.config/devin/skills/install-deep-review"
+  assert_managed_root "$skill"
+  assert_materialized "$skill/SKILL.md" "$REPO_ROOT/harnesses/devin/skills/deep-review/SKILL.md"
+  assert_materialized "$skill/protocol.md" "$REPO_ROOT/skills/deep-review/protocol.md"
+  assert_materialized "$skill/GLOSSARY.md" "$REPO_ROOT/skills/deep-review/GLOSSARY.md"
+  assert_materialized "$skill/references" "$REPO_ROOT/skills/deep-review/references"
+  assert_materialized "$skill/reviewers" "$REPO_ROOT/skills/deep-review/reviewers"
+
+  assert_managed_root "$installer"
+  assert_materialized "$installer/SKILL.md" "$REPO_ROOT/harnesses/devin/skills/install-deep-review/SKILL.md"
+  assert_materialized "$installer/installation.md" "$REPO_ROOT/skills/install-deep-review/installation.md"
+
+  local agent
+  for agent in code-reviewer code-reviewer-structural code-reviewer-validator-static code-reviewer-validator-probe; do
+    assert_materialized "$home/.config/devin/agents/$agent" "$REPO_ROOT/harnesses/devin/agents/$agent"
+  done
 }
 
 new_home() {
-  mktemp -d "${TMPDIR:-/tmp}/deep-review-test.XXXXXX"
+  mktemp -d "$TEST_ROOT/home.XXXXXX"
 }
 
 test_codex_install() {
   local test_home
   test_home="$(new_home)"
   HOME="$test_home" "$REPO_ROOT/install.sh" --codex >/dev/null
-
-  assert_link_target \
-    "$test_home/.agents/skills/deep-review" \
-    "$REPO_ROOT/harnesses/codex/skills/deep-review"
-  for agent in deep-review-scout deep-review-structural deep-review-validator-static deep-review-validator-probe; do
-    assert_link_target \
-      "$test_home/.codex/agents/$agent.toml" \
-      "$REPO_ROOT/harnesses/codex/agents/$agent.toml"
-  done
+  assert_codex_shape "$test_home"
 }
 
 test_all_install() {
   local test_home
   test_home="$(new_home)"
   HOME="$test_home" "$REPO_ROOT/install.sh" --all >/dev/null
-
-  assert_link_target \
-    "$test_home/.config/devin/skills/deep-review" \
-    "$REPO_ROOT/harnesses/devin/skills/deep-review"
-  assert_link_target \
-    "$test_home/.agents/skills/deep-review" \
-    "$REPO_ROOT/harnesses/codex/skills/deep-review"
-  for agent in code-reviewer code-reviewer-structural code-reviewer-validator-static code-reviewer-validator-probe; do
-    assert_link_target \
-      "$test_home/.config/devin/agents/$agent" \
-      "$REPO_ROOT/harnesses/devin/agents/$agent"
-  done
+  assert_devin_shape "$test_home"
+  assert_codex_shape "$test_home"
 }
 
 test_bare_install_detects_supported_harnesses() {
@@ -85,9 +134,7 @@ test_bare_install_detects_supported_harnesses() {
 
   HOME="$test_home" PATH="$fake_bin:/usr/bin:/bin:/c/Windows/System32" "$REPO_ROOT/install.sh" >/dev/null
 
-  assert_link_target \
-    "$test_home/.agents/skills/deep-review" \
-    "$REPO_ROOT/harnesses/codex/skills/deep-review"
+  assert_codex_shape "$test_home"
   [ ! -e "$test_home/.config/devin/skills/deep-review" ] || fail "bare install selected undetected Devin"
 }
 
@@ -100,9 +147,7 @@ test_unrelated_destination_is_backed_up() {
 
   HOME="$test_home" "$REPO_ROOT/install.sh" --codex >/dev/null
 
-  assert_link_target \
-    "$destination" \
-    "$REPO_ROOT/harnesses/codex/skills/deep-review"
+  assert_managed_root "$destination"
   local backups=("$destination".bak-*)
   [ "${#backups[@]}" -eq 1 ] || fail "expected one backup for unrelated destination"
   [ "$(cat "${backups[0]}/local.txt")" = "keep me" ] || fail "backup did not preserve destination"
@@ -118,9 +163,7 @@ test_unrelated_broken_symlink_is_backed_up() {
 
   HOME="$test_home" "$REPO_ROOT/install.sh" --codex >/dev/null
 
-  assert_link_target \
-    "$destination" \
-    "$REPO_ROOT/harnesses/codex/skills/deep-review"
+  assert_managed_root "$destination"
   local backups=("$destination".bak-*)
   [ "${#backups[@]}" -eq 1 ] || fail "expected one backup for unrelated broken symlink"
   [ "$(readlink "${backups[0]}")" = "$test_home/unrelated-missing-target" ] || fail "broken symlink backup changed its target"
@@ -136,9 +179,7 @@ test_managed_broken_symlink_is_replaced() {
 
   HOME="$test_home" "$REPO_ROOT/install.sh" --devin >/dev/null
 
-  assert_link_target \
-    "$destination" \
-    "$REPO_ROOT/harnesses/devin/skills/deep-review"
+  assert_managed_root "$destination"
   local backups=("$destination".bak-*)
   [ ! -e "${backups[0]}" ] || fail "managed broken symlink should not be backed up"
 }
@@ -147,7 +188,7 @@ test_sync_preserves_installed_agent_link() (
   local test_home source backup installed marker
   test_home="$(new_home)"
   source="$REPO_ROOT/skills/deep-review/reviewers/SCOUT.md"
-  backup="$(mktemp "${TMPDIR:-/tmp}/deep-review-scout.XXXXXX")"
+  backup="$(mktemp "$TEST_ROOT/deep-review-scout.XXXXXX")"
   installed="$test_home/.codex/agents/deep-review-scout.toml"
   marker="sync-preserves-installed-agent-link"
 
@@ -162,17 +203,12 @@ test_sync_preserves_installed_agent_link() (
   printf '\n<!-- %s -->\n' "$marker" >> "$source"
   "$REPO_ROOT/scripts/sync-agents.sh" >/dev/null
 
-  assert_link_target \
-    "$installed" \
-    "$REPO_ROOT/harnesses/codex/agents/deep-review-scout.toml"
+  assert_materialized "$installed" "$REPO_ROOT/harnesses/codex/agents/deep-review-scout.toml"
   grep -q "$marker" "$installed" || fail "installed Codex agent did not receive synchronized reviewer body"
 )
 
 test_windows_file_link_falls_back_to_copy() {
-  case "$(uname -s)" in
-    MINGW*|MSYS*|CYGWIN*) ;;
-    *) return 0 ;;
-  esac
+  is_windows_shell || return 0
 
   local test_home fake_bin real_cmd installed source output
   test_home="$(new_home)"
@@ -195,27 +231,39 @@ test_windows_file_link_falls_back_to_copy() {
   [ ! "$installed" -ef "$source" ] || fail "copy fallback unexpectedly remained a hardlink"
   cmp -s "$installed" "$source" || fail "Codex agent copy fallback changed file contents"
   case "$output" in
-    *"rerun the installer after adapter updates"*) ;;
+    *"rerun the installer after repository updates"*) ;;
     *) fail "copy fallback did not warn about update behavior" ;;
   esac
 }
 
-test_check_detects_generated_drift() {
+test_native_powershell_install() {
+  is_windows_shell || return 0
+
+  local test_home win_home win_installer
+  test_home="$(new_home)"
+  win_home="$(cygpath -w "$test_home")"
+  win_installer="$(cygpath -w "$REPO_ROOT/install.ps1")"
+  HOME="$test_home" "$REPO_ROOT/install.sh" --codex >/dev/null
+  powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$win_installer" -Codex -HomePath "$win_home" >/dev/null
+  powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$win_installer" -Codex -HomePath "$win_home" >/dev/null
+  assert_codex_shape "$test_home"
+  local backups=("$test_home/.agents/skills/deep-review".bak-*)
+  [ ! -e "${backups[0]}" ] || fail "switching installers backed up a managed skill root"
+}
+
+test_check_detects_generated_drift() (
   DEEP_REVIEW_SKIP_TESTS=1 "$REPO_ROOT/scripts/check.sh" >/dev/null
 
   local agent="$REPO_ROOT/harnesses/codex/agents/deep-review-scout.toml"
   local backup
-  backup="$(mktemp "${TMPDIR:-/tmp}/deep-review-agent.XXXXXX")"
+  backup="$(mktemp "$TEST_ROOT/deep-review-agent.XXXXXX")"
   cp "$agent" "$backup"
-  trap 'cp "$backup" "$agent"; rm -f "$backup"' RETURN
+  trap 'cp "$backup" "$agent"; rm -f "$backup"' EXIT
   sed -i '0,/# Scout Contract/s//# Drifted Scout Contract/' "$agent"
   if DEEP_REVIEW_SKIP_TESTS=1 "$REPO_ROOT/scripts/check.sh" >/dev/null 2>&1; then
     fail "check.sh accepted stale generated agent content"
   fi
-  cp "$backup" "$agent"
-  rm -f "$backup"
-  trap - RETURN
-}
+)
 
 PATH="$ORIGINAL_PATH"
 test_codex_install
@@ -226,6 +274,7 @@ test_unrelated_broken_symlink_is_backed_up
 test_managed_broken_symlink_is_replaced
 test_sync_preserves_installed_agent_link
 test_windows_file_link_falls_back_to_copy
+test_native_powershell_install
 test_check_detects_generated_drift
 
 echo "Distribution tests passed."

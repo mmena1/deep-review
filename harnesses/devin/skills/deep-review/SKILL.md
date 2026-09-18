@@ -27,6 +27,7 @@ Read `protocol.md` completely, then execute that protocol with Devin's native su
 - Wait for the complete scout wave. Preserve completed scout evidence when one invocation fails and mark the run incomplete.
 - When hypotheses survive deduplication, launch `code-reviewer-validator-static` once per canonical hypothesis in one concurrent read-only wave.
 - After the complete static wave and baseline verification, launch `code-reviewer-validator-probe` sequentially for successful `Needs probe` outcomes only.
+- Capture the Devin runtime identity/version and native role names for the shared runtime acceptance receipt. Mark only coordinator-observed paths as `PASS` or `FAIL`; leave every other row `NOT EXERCISED`.
 - Never substitute the coordinator for a scout or validator and never change the user's global Devin concurrency configuration.
 
 The adapter metadata provides native tool restrictions. The shared protocol owns target resolution, state meanings, failure behavior, reporting, publication, and cleanup.

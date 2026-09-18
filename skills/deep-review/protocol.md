@@ -104,7 +104,25 @@ Every validator first tries to falsify, checks callers, guards, invariants, cont
 
 Context capture is deterministic protocol machinery, not a task for the model to reimplement during a run. Once an artifact has passed path, type, size, target-binding, and race checks, the coordinator copies it exactly once with the fixed direct `cp` filesystem operation (or the harness's byte-for-byte equivalent selected before the run). Every manifest references that existing snapshot entry; a manifest lookup never triggers another copy or rewrite. The operation must preserve bytes exactly and must not use model-authored writes to reconstruct contents or generate an ad-hoc executable capture script. Existing pre/post size and mtime checks, retry behavior, SHA-256 and metadata verification, provenance, privacy, size limits, and snapshot immutability remain mandatory.
 
-The coordinator persists protocol state in one coordinator-owned `run-state.json` (or an equivalent single run-state record when the harness requires another serialization) rather than one file per pipeline stage. That state records the exact pinned baseline identity and restoration status; scout completion and provenance; canonical hypotheses, original IDs, origins, deduplication evidence, and context references; every completed validator outcome and evidence; incomplete-run and unattempted-hypothesis status; final report data; cleanup status; and, when publication occurs, the exact publication payload. The context snapshot remains separate because it is an immutable evidence bundle with manifests. A user-facing `final-report.md` may be preserved when useful, and a `publication-receipt.json` is created only when publication occurs and contains the exact payload together with its publication receipt. Separate intermediate files for scout output, canonical hypotheses, or individual validator outcomes are not created unless a concrete runtime constraint requires them and that constraint is recorded in the run state.
+The coordinator persists protocol state in one coordinator-owned `run-state.json` (or an equivalent single run-state record when the harness requires another serialization) rather than one file per pipeline stage. That state records the exact pinned baseline identity and restoration status; scout completion and provenance; canonical hypotheses, original IDs, origins, deduplication evidence, and context references; every completed validator outcome and evidence; incomplete-run and unattempted-hypothesis status; runtime acceptance receipt; final report data; cleanup status; and, when publication occurs, the exact publication payload. The context snapshot remains separate because it is an immutable evidence bundle with manifests. A user-facing `final-report.md` may be preserved when useful, and a `publication-receipt.json` is created only when publication occurs and contains the exact payload together with its publication receipt. Separate intermediate files for scout output, canonical hypotheses, or individual validator outcomes are not created unless a concrete runtime constraint requires them and that constraint is recorded in the run state.
+
+## Runtime acceptance receipt
+
+Every real review emits a passive runtime acceptance receipt from coordinator-observed state. The harness wrapper supplies the harness identity and version; the shared receipt records the adapter version or reviewed commit, selected roles, and one status for every acceptance scenario: `PASS`, `FAIL`, or `NOT EXERCISED`.
+
+Record only observed behavior. Never perturb a real review to exercise a row, infer a pass from static configuration, or convert an unobserved path into a pass. Preserve concise evidence for each exercised row in `run-state.json` and the final report:
+
+- zero hypotheses — whether validation was correctly skipped;
+- surviving hypotheses — whether every canonical hypothesis received independent static adjudication;
+- multiple selected scouts — whether the complete selected set launched in one simultaneous wave;
+- insufficient scout capacity — whether analysis stopped before any partial launch;
+- validator probes — whether the static wave completed and the exact baseline was restored and verified before each sequential probe;
+- scout failure — whether running scouts finished, the run became incomplete, and publication/PASS were blocked;
+- validator partial failure — whether completed outcomes survived and remaining hypotheses were marked not validated due to review failure;
+- PR head change — whether stale reviewed/current SHAs were reported and publication was blocked;
+- cleanup — whether removal was confined to the current run and exact leftovers were reported.
+
+Rare failure and transition paths remain `NOT EXERCISED` until they occur naturally or a targeted smoke run observes them. The receipt is conformance evidence for this run, not proof of unexercised behavior.
 
 ## Pipeline invariants
 
@@ -116,6 +134,7 @@ The coordinator persists protocol state in one coordinator-owned `run-state.json
 - Static validators never execute artifact-producing commands. A static-wave failure preserves completed outcomes, marks the review incomplete, and prevents writable probing for hypotheses without successful static adjudication.
 - Once each context artifact passes validation, it is copied exactly once with the fixed direct `cp` operation or selected harness equivalent; manifests reference the existing snapshot entry, and the model does not reconstruct artifact contents or generate capture machinery during a run.
 - Coordinator-owned protocol state is consolidated in one run state, including the exact publication payload when applicable, with final-report and publication-receipt artifacts created only under the conditions above.
+- Every final report and run state contains the passive runtime acceptance receipt with no inferred passes.
 - Once the coordinator-owned worktree and exact baseline are established, restoration authorization is obtained once for that exact path or encapsulated in a coordinator-only helper that rejects other paths; no blanket `git reset` or `git clean` permission is granted. The coordinator preserves each outcome and evidence outside probe state, automatically restores the exact pinned baseline, cleans tracked, untracked, and ignored artifacts only in that worktree, and verifies `HEAD`, the tree, and `git status` before the next invocation. Restoration failure stops validation and marks the run incomplete.
 - Any scout, static validator, writable validator, or restoration failure makes the run incomplete, prevents PASS/`No findings`, and prevents publication. Unattempted hypotheses remain explicitly not validated due to review failure.
 - A changed PR head makes the pinned result stale. Report reviewed and current SHAs, and rerun before current-gate use or publication.

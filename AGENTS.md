@@ -3,14 +3,16 @@
 ## Repository layout
 
 - `skills/deep-review/` — canonical harness-neutral protocol, reviewer contracts, lenses, glossary, and references.
-- `harnesses/devin/` — complete Devin skill and native agent adapter.
-- `harnesses/codex/` — complete Codex skill and native custom-agent adapter.
+- `skills/install-deep-review/` — canonical explicit installation workflow.
+- `harnesses/devin/` — Devin wrappers, native metadata, and reviewer agents.
+- `harnesses/codex/` — Codex wrappers, native metadata, and custom reviewer agents.
 - `scripts/` — generated-body synchronization and the canonical distribution check.
 
 ## Working in this repo
 
 - Edit shared semantics only under `skills/deep-review/`; edit native metadata and orchestration only under the corresponding `harnesses/` adapter.
-- After shared reviewer or composed-skill changes, run `./scripts/sync-agents.sh` and commit the generated adapter artifacts.
+- Do not commit copies of shared protocol, glossary, reference, or reviewer files under a harness adapter; the installers compose those paths at install time.
+- After shared reviewer changes, run `./scripts/sync-agents.sh` and commit the refreshed reviewer bodies embedded in native agent files.
 - Run `./scripts/check.sh` before commit. It is the same command CI uses.
 - After changes, verify Devin still loads the skill and agents:
   - `devin skills list`

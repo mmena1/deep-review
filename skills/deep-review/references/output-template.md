@@ -9,11 +9,26 @@ Publication: [PR # / local only / stale and blocked]
 Scouts: [selected scouts]
 Validation: [run / not needed / incomplete]
 Context snapshot: [target-bound files/manifests, omitted optional files, warnings, or "empty"]
+Runtime: [harness identity/version] | Adapter: [reviewed commit/version]
 
 **Pipeline:** Hypotheses [discovered] → [after dedupe]; Validation [findings] Finding, [disproved] Disproved, [unresolved] Unresolved
 **Status:** complete | stale | **Review incomplete** — [scout/validator failure and affected hypotheses]
 
 **Headline takeaway:** [most important Finding, "No findings" when complete with zero Findings and zero Unresolved items, "<N> unresolved item(s) need discussion" when complete with no Findings but Unresolved items, or "Review incomplete"]
+
+### Runtime acceptance receipt
+
+| Scenario | Status | Observed evidence |
+|---|---|---|
+| Zero hypotheses | PASS / FAIL / NOT EXERCISED | [coordinator observation] |
+| Surviving hypotheses | PASS / FAIL / NOT EXERCISED | [coordinator observation] |
+| Multiple selected scouts | PASS / FAIL / NOT EXERCISED | [coordinator observation] |
+| Insufficient scout capacity | PASS / FAIL / NOT EXERCISED | [coordinator observation] |
+| Validator probes | PASS / FAIL / NOT EXERCISED | [coordinator observation] |
+| Scout failure | PASS / FAIL / NOT EXERCISED | [coordinator observation] |
+| Validator partial failure | PASS / FAIL / NOT EXERCISED | [coordinator observation] |
+| PR head change | PASS / FAIL / NOT EXERCISED | [coordinator observation] |
+| Cleanup | PASS / FAIL / NOT EXERCISED | [coordinator observation] |
 
 ### Action policy
 

@@ -1,6 +1,6 @@
 # Runtime Acceptance Matrix
 
-Static checks cannot prove multi-agent orchestration. Run these manual smoke tests after changes to wrappers, permissions, custom-agent metadata, or orchestration language. Record the harness version, reviewed commit, selected roles, and observed result.
+Static checks cannot prove multi-agent orchestration. Every real review therefore emits a passive receipt in its run state and final report with the harness identity/version, reviewed adapter commit, selected roles, and observed result for every row. Use `PASS`, `FAIL`, or `NOT EXERCISED`; unobserved behavior is never a pass.
 
 | Scenario | Devin expected result | Codex expected result |
 | --- | --- | --- |
@@ -14,4 +14,6 @@ Static checks cannot prove multi-agent orchestration. Run these manual smoke tes
 | PR head changes | Reviewed and current SHAs are reported; result is stale and publication is blocked | Same |
 | Cleanup | Only the current run's worktree, context snapshot, and run directory are removed | Same |
 
-The smoke test passes only when both harnesses preserve the protocol's state meanings, failure behavior, publication safeguards, and single-worktree invariant. Different hypotheses or wording across harnesses are expected and do not fail behavioral equivalence.
+Normal reviews exercise only paths they encounter. Keep rare failures and transitions `NOT EXERCISED` until natural execution or a targeted smoke run observes them; never perturb a real review solely to fill the matrix. After changes to wrappers, permissions, custom-agent metadata, or orchestration language, targeted Devin and Codex smoke runs remain required for important gaps not covered by passive receipts.
+
+Cross-harness acceptance passes only when collected receipts and targeted smoke evidence show both harnesses preserve the protocol's state meanings, failure behavior, publication safeguards, and single-worktree invariant. Different hypotheses or wording across harnesses are expected and do not fail behavioral equivalence.

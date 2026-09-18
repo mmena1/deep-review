@@ -20,15 +20,17 @@ The canonical semantics live in `skills/deep-review/protocol.md`. Shared scout a
 
 ```text
 skills/deep-review/              canonical protocol and reviewer sources
-harnesses/devin/                 complete Devin skill and agent adapter
-harnesses/codex/                 complete Codex skill and custom-agent adapter
-scripts/sync-agents.sh           refresh generated adapter content
+skills/install-deep-review/      canonical installation workflow
+harnesses/devin/                 Devin wrappers, metadata, and native agents
+harnesses/codex/                 Codex wrappers, metadata, and native agents
+install.sh / install.ps1         compose personal installations from those sources
+scripts/sync-agents.sh           refresh embedded native-agent reviewer bodies
 scripts/check.sh                 canonical local and CI verification
 docs/capability-matrix.md        adapter mechanism differences
-docs/runtime-acceptance.md       manual orchestration smoke tests
+docs/runtime-acceptance.md       passive receipts and targeted smoke tests
 ```
 
-Generated composed views are committed so each harness skill directory is directly installable. Edit canonical sources, then refresh adapters:
+Shared protocol, glossary, references, and reviewer contracts are committed only under `skills/deep-review/`. The installers compose each harness's personal skill directory from those canonical sources and its native wrapper; only reviewer bodies embedded inside native agent files are generated. After reviewer changes, refresh those embedded sections:
 
 ```sh
 ./scripts/sync-agents.sh
@@ -44,12 +46,14 @@ Generated composed views are committed so each harness skill directory is direct
 ./install.sh --all
 ```
 
-The installer links each complete adapter as one unit. On Windows it uses directory junctions and file hardlinks, the narrow equivalents available without administrator privileges. If a file hardlink cannot be created, including across volumes, it copies that native agent file and warns that the installer must be rerun after adapter updates. It backs up unrelated existing destinations, replaces repository-owned or broken managed links, and never changes global concurrency settings.
+From native Windows PowerShell, use `./install.ps1` with `-Devin`, `-Codex`, or `-All`. After installing once, explicitly invoke `/install-deep-review` to refresh or install another supported harness through the appropriate native installer.
+
+The installer creates a small managed skill root and materializes canonical directories, canonical files, and native wrapper metadata into it. Unix uses symbolic links. Windows uses directory junctions and file hardlinks, the narrow equivalents available without administrator privileges. If link creation fails, including across volumes, it copies the affected path and warns that the installer must be rerun after repository updates. It backs up unrelated existing destinations, replaces repository-owned or broken managed links, and never changes global concurrency settings.
 
 Devin installs under `~/.config/devin/`. Codex installs the personal skill under `~/.agents/skills/` and custom agents under `~/.codex/agents/`, following current Codex discovery locations.
 
 ## Verification
 
-`./scripts/check.sh` verifies canonical sources, composed adapter views, generated reviewer sections, native metadata structure, required `git` and `gh` commands, harness-neutral shared content, adapter-role mappings, and installer behavior. CI invokes the same command.
+`./scripts/check.sh` verifies canonical sources, the absence of committed semantic copies in adapters, install-time composition, generated reviewer sections, native metadata structure, required `git` and `gh` commands, harness-neutral shared content, adapter-role mappings, and installer behavior. CI invokes the same command on Linux and Windows.
 
-Static checks cannot prove multi-agent orchestration. Run `docs/runtime-acceptance.md` on Devin and Codex after changes to wrappers, permissions, native agent metadata, or orchestration behavior.
+Static checks cannot prove multi-agent orchestration. Every real review emits a passive runtime-acceptance receipt; use the targeted scenarios in `docs/runtime-acceptance.md` for important paths that normal reviews do not exercise.

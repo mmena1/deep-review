@@ -5,6 +5,8 @@ This matrix records adapter mechanisms. The shared semantics remain in `skills/d
 | Capability | Devin adapter | Codex adapter |
 | --- | --- | --- |
 | Skill location | `~/.config/devin/skills/deep-review` | `~/.agents/skills/deep-review` |
+| Explicit installer skill | `~/.config/devin/skills/install-deep-review`; user-triggered | `~/.agents/skills/install-deep-review`; implicit invocation disabled |
+| Installed skill composition | Native wrapper plus linked canonical files/directories | Native wrapper and metadata plus linked canonical files/directories |
 | Native agent location | `~/.config/devin/agents/` | `~/.codex/agents/*.toml` |
 | Coordinator model | Devin skill frontmatter pins the existing Sol medium assignment | Parent Codex session; the adapter does not override the user's coordinator model |
 | Generic scout | `code-reviewer`, Luna medium; `exec` is available, so no-write/no-probe confinement is instruction-enforced | `deep_review_scout`, Luna medium, read-only sandbox |
@@ -16,3 +18,5 @@ This matrix records adapter mechanisms. The shared semantics remain in `skills/d
 | Ordinary GitHub work | `git` and `gh` | `git` and `gh` |
 
 Capability differences are diagnostic unless they prevent a hard protocol invariant. An adapter that cannot preserve an invariant stops the review rather than degrading it.
+
+On Unix-like systems, composition uses symbolic links. Native Windows PowerShell and Git Bash use directory junctions and file hardlinks, with a warned copy fallback when a link cannot be created. Neither installer changes harness concurrency.
