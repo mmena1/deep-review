@@ -1,7 +1,7 @@
 name = "deep_review_scout"
 description = "Read-only deep-review scout using one selected review lens."
-model = "gpt-5.6-luna"
-model_reasoning_effort = "medium"
+model = "gpt-6-luna"
+model_reasoning_effort = "high"
 sandbox_mode = "read-only"
 
 # BEGIN GENERATED: shared reviewer body
