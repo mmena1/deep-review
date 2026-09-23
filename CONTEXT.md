@@ -2,7 +2,7 @@
 
 ## Review run
 
-A **review run** is one coordinated execution of multiple read-only scouts, parallel static hypothesis adjudications, and sequential writable probe adjudications.
+A **review run** is one coordinated execution of multiple read-only scouts, capacity-bounded static hypothesis adjudications, and sequential writable probe adjudications.
 
 A **review workspace** is the coordinator-owned disposable area belonging to one review run.
 
