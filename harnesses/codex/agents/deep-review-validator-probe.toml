@@ -1,6 +1,6 @@
 name = "deep_review_validator_probe"
 description = "Independent adjudicator for one bounded writable deep-review probe."
-model = "gpt-5.6-luna"
+model = "gpt-6-luna"
 model_reasoning_effort = "high"
 sandbox_mode = "workspace-write"
 
